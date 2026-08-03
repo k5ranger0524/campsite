@@ -1,9 +1,17 @@
 # 赤城山オートキャンプ場 空き監視
 
-【F1】〜【F4】(3家族サイト) の **2026/9/19(土)** に空きが出たら通知する。
+【F1】〜【F4】(3家族サイト) の **2026/9/19(土)** に空きが出たら ntfy で通知する。
 
-「空きなし」→「空きあり」に変化したときだけ通知し、
-一度通知したら、また「空きなし」に戻るまで再通知しない。
+空きが続いている間は **2時間ごとに再通知**し、満室に戻ったら通知履歴をリセットする。
+
+## 役割分担
+
+| 事象 | 通知経路 | 終了コード |
+|---|---|---|
+| **空きが出た**（本来の目的） | ntfy.sh の通知 | `0` |
+| **監視が壊れた**（異常検知） | GitHub Actions のジョブ失敗メール | `1` |
+
+通知したかどうかで終了コードは変わらない。`exit 1` は常に「監視が正しく動かなかった」を意味する。
 
 ---
 
@@ -11,7 +19,14 @@
 
 ```bash
 pip install -r requirements.txt
+export NTFY_TOPIC=your-secret-topic-name
 ```
+
+スマホの [ntfy アプリ](https://ntfy.sh/) で同じトピック名を購読しておく。
+トピック名は名前を知っていれば誰でも購読できるため、推測されにくい文字列にすること。
+
+**`NTFY_TOPIC` は必須。** 未設定の場合は起動直後に `exit 1` で終了する
+（通知先が無いまま黙って動き続け、空きに気づけない事態を避けるため）。
 
 ## 使い方
 
@@ -19,7 +34,7 @@ pip install -r requirements.txt
 python3 monitor.py                        # 実サイトを監視
 python3 monitor.py --date 2026-09-20      # 別の日を監視
 python3 monitor.py --file debug.html      # ローカルHTMLでパースをテスト
-python3 monitor.py --test-notify          # 通知処理だけを強制発火
+python3 monitor.py --test-notify          # 通知処理を強制発火して疎通確認
 ```
 
 ### オプション
@@ -29,6 +44,7 @@ python3 monitor.py --test-notify          # 通知処理だけを強制発火
 | `--date YYYY-MM-DD` | 監視対象日（既定 `2026-09-19`） |
 | `--file PATH` | 実サイトの代わりにローカルHTMLを読む。既定では `state.json` を更新しない |
 | `--state PATH` | 状態ファイル（既定 `state.json`） |
+| `--repeat-hours N` | 空きあり継続中の再通知間隔（既定 `2`） |
 | `--test-notify` | 状態に関わらず通知を強制発火。`state.json` は更新しない |
 | `--write-state-from-file` | `--file` でも `state.json` を更新する（テスト用） |
 
@@ -36,37 +52,12 @@ python3 monitor.py --test-notify          # 通知処理だけを強制発火
 
 | コード | 意味 |
 |---|---|
-| `0` | 正常終了（変化なし、または ntfy 送信成功） |
-| `1` | **空きを検知したが `NTFY_TOPIC` 未設定** → ジョブ失敗として通知する |
-| `2` | 異常終了（取得失敗・構造変化など）。`state.json` は更新しない |
+| `0` | 正常終了（通知なし、または通知の送信に成功） |
+| `1` | 異常終了。`state.json` は更新しない |
 
-## 通知
+`exit 1` になるのは次の場合。
 
-`NTFY_TOPIC` の有無で経路が切り替わる。どちらでも使える。
-
-**(a) `NTFY_TOPIC` を設定した場合** — ntfy.sh に送信して `exit 0`。
-
-```bash
-export NTFY_TOPIC=your-secret-topic-name
-python3 monitor.py
-```
-
-スマホの [ntfy アプリ](https://ntfy.sh/) で同じトピック名を購読しておく。
-トピック名は URL を知っていれば誰でも購読できるため、推測されにくい文字列にすること。
-
-**(b) `NTFY_TOPIC` 未設定の場合** — `exit 1` で終了する。
-GitHub Actions ではジョブ失敗となり、GitHub からメールが届く。
-
-通知本文には空いたサイト名（`【F2】3家族サイト` など）と予約ページURLが入る。
-
-> 補足: (b) の経路でも「通知した」とみなして `state.json` を更新する。
-> 仕様どおり再通知はしないので、**ジョブ失敗メールを見逃すと次の通知は
-> 一度満室に戻るまで来ない**。確実に受け取りたい場合は (a) を推奨。
-
-## エラー時の動作
-
-次の場合は `exit 2` で終了し、**`state.json` を更新しない**。
-
+- `NTFY_TOPIC` が未設定（起動直後に判定）
 - ページ取得に失敗した（4回まで指数バックオフで再試行したうえで失敗）
 - F1〜F4 の 4 つすべてを見つけられなかった
 - 9/19 の列が表の中に見つからなかった
@@ -74,8 +65,56 @@ GitHub Actions ではジョブ失敗となり、GitHub からメールが届く�
 - th と td の個数が一致しなかった
 - ntfy.sh への送信に失敗した
 
-失敗を「空きなし」と誤記録して次回に誤通知するのを防ぐため。
-またサイト側のHTML構造が変わった場合も、黙って誤判定せずジョブ失敗として気づけるようにしている。
+## 通知の仕様
+
+**新規通知** — 「空きあり以外」→「空きあり」に変化したとき。
+
+```
+2026-09-19 に空きが出ました。
+
+・F2  【F2】3家族サイト
+・F3  【F3】3家族サイト 大
+
+予約ページ:
+https://reserve.489ban.net/client/autocamp-akagi/0/plan/availability/room/stay?date=2026-09-19
+```
+
+**継続通知** — 空きあり状態のまま、最終通知から2時間経過したとき。
+
+```
+【継続中】2026-09-19 は引き続き空きがあります。
+
+・F2  【F2】3家族サイト（継続中）
+
+※ 空きが続く間は 2 時間ごとにお知らせします。
+
+予約ページ:
+...
+```
+
+通知はサイト単位で判定するため、F2だけ2時間経過していれば F2 だけが載る。
+満室に戻ったサイトは通知履歴がリセットされ、次に空いたときは「新規」として通知される。
+
+## state.json
+
+**正常にパースできたときだけ書き込む。** 取得失敗・構造変化・通知送信失敗の場合は
+絶対に書き込まないため、失敗を「空きなし」と誤記録して次回に誤通知することがない。
+また通知送信に失敗した回は履歴を更新しないので、次回の実行で通知をやり直す。
+
+```json
+{
+  "updated_at": "2026-08-03T14:30:42+09:00",
+  "target_date": "2026-09-19",
+  "rooms": {
+    "F1": { "status": "full",      "name": "【F1】3家族サイト 大", "notified_at": null },
+    "F2": { "status": "available", "name": "【F2】3家族サイト",     "notified_at": "2026-08-03T14:30:42+09:00" },
+    "F3": { "status": "available", "name": "【F3】3家族サイト 大", "notified_at": "2026-08-03T14:30:42+09:00" },
+    "F4": { "status": "full",      "name": "【F4】3家族サイト 大", "notified_at": null }
+  }
+}
+```
+
+`notified_at` が再通知の制御に使われる。空きあり以外のサイトは常に `null`（＝履歴リセット）。
 
 ## 判定ロジック
 
@@ -99,10 +138,11 @@ GitHub Actions ではジョブ失敗となり、GitHub からメールが届く�
 ## テスト
 
 ```bash
-bash tests/test_monitor.sh
+python3 tests/test_monitor.py
 ```
 
-パース・状態遷移・エラー処理を 36 項目で検証する。
+パース・通知判定・再通知間隔・状態遷移・エラー処理を 63 項目で検証する。
+ntfy.sh への送信は差し替えて検証するので、実際の送信は行わない。
 
 **注意:** `tests/fixtures/` のHTMLは仕様から組み立てた**合成データ**であり、
 実サイトから取得したものではない（`tests/make_fixture.py` で生成）。
@@ -116,8 +156,10 @@ python3 monitor.py --file debug.html    # F1〜F4 すべて「空きなし」に
 
 ## GitHub Actions での定期実行
 
-`state.json` を実行間で引き継ぐ必要がある点に注意。
-リポジトリにコミットして持ち回るのが一番単純。
+`state.json` を実行間で引き継ぐ必要がある（引き継がないと毎回初回扱いになり、
+空いている間ずっと通知が飛び続ける）。リポジトリにコミットして持ち回るのが単純。
+
+`NTFY_TOPIC` は Settings → Secrets and variables → Actions に登録する。
 
 ```yaml
 name: akagi-monitor
@@ -141,11 +183,11 @@ jobs:
 
       - name: 空き状況をチェック
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # 未設定ならジョブ失敗で通知
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python3 monitor.py
 
       - name: state.json を保存
-        if: always()          # 通知でexit 1になっても保存する
+        if: always()
         run: |
           if [ -n "$(git status --porcelain state.json)" ]; then
             git config user.name  github-actions
@@ -156,8 +198,10 @@ jobs:
           fi
 ```
 
-`if: always()` が必要な理由: `NTFY_TOPIC` 未設定で通知が起きると `exit 1` になるため、
-これがないと `state.json` が保存されず毎回同じ通知が繰り返される。
-
-`exit 2`（異常終了）のときは `monitor.py` 自身が `state.json` を書き換えないので、
+`if: always()` を付けてよい理由: `monitor.py` は**正常にパースできたときしか
+`state.json` を書かない**。異常終了(`exit 1`)の回はファイルが変化しないので、
 `always()` でも誤った状態がコミットされることはない。
+
+ジョブが失敗（`exit 1`）したら GitHub からメールが届く。
+これは「空きが出た」ではなく「**監視が壊れた**」の合図なので、
+サイトのHTML構造が変わっていないかログを確認すること。

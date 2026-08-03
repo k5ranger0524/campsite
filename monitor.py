@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """赤城山オートキャンプ場 3家族サイト(F1〜F4) の空き状況を監視する。
 
-「空きなし」→「空きあり」に変化したときだけ通知する。
-一度通知したら、また「空きなし」に戻るまで再通知しない。
+役割分担:
+    ntfy通知         = 空きが出た（本来の目的）        → exit 0
+    ジョブ失敗(exit 1) = 監視が壊れた（異常検知）
+
+空きあり状態が続いている間は REPEAT_HOURS ごとに再通知する。
+満室に戻ったら通知履歴をリセットする。
 
 使い方:
     python3 monitor.py                       # 実サイトを監視
@@ -10,9 +14,8 @@
     python3 monitor.py --test-notify         # 通知処理だけを強制発火して確認
 
 終了コード:
-    0  正常終了（変化なし、または ntfy 通知の送信に成功）
-    1  空きを検知したが NTFY_TOPIC 未設定（GitHub Actions のジョブ失敗で通知する）
-    2  異常終了（取得失敗・構造変化など）。state.json は更新しない
+    0  正常終了（変化なし、または通知の送信に成功）
+    1  異常終了（設定不備・取得失敗・構造変化・通知送信失敗）。state.json は更新しない
 """
 
 import argparse
@@ -60,10 +63,11 @@ USER_AGENT = (
 )
 
 JST = timezone(timedelta(hours=9))
+DEFAULT_REPEAT_HOURS = 2.0
 
 
 class MonitorError(Exception):
-    """取得失敗・構造変化など、state.json を更新してはいけない異常。"""
+    """state.json を更新してはいけない異常。exit 1 で終了する。"""
 
 
 def log(msg):
@@ -237,13 +241,30 @@ def load_state(path):
         return {}
 
 
-def save_state(path, rooms, date_str):
+def save_state(path, rooms, previous, notified_keys, now, date_str):
+    """正常にパースできた時だけ呼ばれる。
+
+    notified_at は「空きあり中の最終通知時刻」。
+    満室等に戻ったサイトは None にして通知履歴をリセットする。
+    """
+    out = {}
+    for key, info in rooms.items():
+        if info["status"] != "available":
+            notified_at = None          # 満室に戻ったらリセット
+        elif key in notified_keys:
+            notified_at = now.isoformat()
+        else:
+            notified_at = (previous.get(key) or {}).get("notified_at")
+        out[key] = {
+            "status": info["status"],
+            "name": info["name"],
+            "notified_at": notified_at,
+        }
+
     payload = {
-        "updated_at": datetime.now(JST).isoformat(),
+        "updated_at": now.isoformat(),
         "target_date": date_str,
-        "rooms": {
-            k: {"status": v["status"], "name": v["name"]} for k, v in rooms.items()
-        },
+        "rooms": out,
     }
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -252,30 +273,73 @@ def save_state(path, rooms, date_str):
     os.replace(tmp, path)
 
 
-def detect_newly_available(current, previous):
-    """「空きあり以外」→「空きあり」に変化したサイトを返す。
+def parse_dt(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
 
-    前回も空きありだったサイトは、通知済みとみなして返さない。
+
+def decide_notifications(current, previous, now, repeat_hours):
+    """通知すべきサイトを (新規, 継続中) に分けて返す。
+
+    新規  : 空きあり以外 → 空きあり に変化した
+    継続中: 空きありが続いていて、最終通知から repeat_hours 以上経過した
     """
-    newly = []
+    new_keys, cont_keys = [], []
+    interval = timedelta(hours=repeat_hours)
+
     for key in ROOMS:
-        now = current[key]["status"]
-        before = (previous.get(key) or {}).get("status")
-        if now == "available" and before != "available":
-            newly.append(key)
-    return newly
+        if current[key]["status"] != "available":
+            continue
+        prev = previous.get(key) or {}
+        last = parse_dt(prev.get("notified_at"))
+
+        if prev.get("status") != "available" or last is None:
+            new_keys.append(key)
+        elif now - last >= interval:
+            cont_keys.append(key)
+        else:
+            remain = interval - (now - last)
+            mins = int(remain.total_seconds() // 60)
+            log(f"  {key}: 空きあり継続中だが前回通知から {mins} 分後まで再通知しません")
+
+    return new_keys, cont_keys
 
 
 # --------------------------------------------------------------------------
 # 通知
 # --------------------------------------------------------------------------
-def build_message(keys, rooms, url, date_str):
-    lines = [f"{date_str} に空きが出ました。", ""]
-    for key in keys:
-        name = (rooms.get(key) or {}).get("name") or key
-        lines.append(f"・{key}  {name}")
+def build_message(new_keys, cont_keys, rooms, url, date_str, repeat_hours):
+    def name_of(key):
+        return (rooms.get(key) or {}).get("name") or key
+
+    lines = []
+    if new_keys:
+        lines.append(f"{date_str} に空きが出ました。")
+        lines.append("")
+        for key in new_keys:
+            lines.append(f"・{key}  {name_of(key)}")
+    if cont_keys:
+        if new_keys:
+            lines.append("")
+        lines.append(f"【継続中】{date_str} は引き続き空きがあります。")
+        lines.append("")
+        for key in cont_keys:
+            lines.append(f"・{key}  {name_of(key)}（継続中）")
+        lines.append("")
+        lines.append(f"※ 空きが続く間は {repeat_hours:g} 時間ごとにお知らせします。")
+
     lines += ["", "予約ページ:", url]
     return "\n".join(lines)
+
+
+def build_title(new_keys, cont_keys):
+    if new_keys:
+        return "赤城山オートキャンプ場 空き通知"
+    return "赤城山オートキャンプ場 空き継続中"
 
 
 def send_ntfy(topic, title, message, url):
@@ -295,35 +359,45 @@ def send_ntfy(topic, title, message, url):
     resp.raise_for_status()
 
 
-def notify(keys, rooms, url, date_str):
-    """通知を行い、'配信済みとみなしてよいか' と 終了コード を返す。"""
-    title = "赤城山オートキャンプ場 空き通知"
-    message = build_message(keys, rooms, url, date_str)
+def notify(new_keys, cont_keys, rooms, url, date_str, repeat_hours):
+    """通知を送る。送信できなければ MonitorError（＝state を更新させない）。"""
+    title = build_title(new_keys, cont_keys)
+    message = build_message(new_keys, cont_keys, rooms, url, date_str, repeat_hours)
 
-    log("―― 通知内容 ――")
+    log(f"―― 通知内容（{title}） ――")
     for line in message.splitlines():
         log("  " + line)
     log("――――――――――")
 
     topic = os.environ.get("NTFY_TOPIC", "").strip()
     if not topic:
-        # NTFY_TOPIC 未設定: ジョブ失敗そのものを通知手段とする。
-        log("NTFY_TOPIC が未設定のため、異常終了(exit 1)で通知します")
-        return True, 1
+        raise MonitorError(
+            "NTFY_TOPIC が未設定のため通知を送れません。環境変数を設定してください"
+        )
 
     try:
         send_ntfy(topic, title, message, url)
     except requests.RequestException as exc:
-        # 送信できていないので通知済みにしない（次回また通知を試みる）
         raise MonitorError(f"ntfy.sh への送信に失敗しました: {exc}")
 
     log(f"ntfy.sh に送信しました (topic={topic})")
-    return True, 0
 
 
 # --------------------------------------------------------------------------
 def run(args):
     url = build_url(args.date)
+    now = datetime.now(JST)
+
+    # 黙って動いて通知が届かない状態を避けるため、起動直後に設定を確認する。
+    # --file だけのパース確認では通知しないので対象外（--test-notify は確認する）。
+    if not os.environ.get("NTFY_TOPIC", "").strip():
+        if args.file and not args.test_notify:
+            log("警告: NTFY_TOPIC が未設定です（--file のパース確認のため続行します）")
+        else:
+            raise MonitorError(
+                "NTFY_TOPIC が設定されていません。"
+                "通知先が無いまま監視しても空きに気づけないため終了します"
+            )
 
     if args.file:
         log(f"ローカルファイルを読み込みます: {args.file}")
@@ -348,30 +422,32 @@ def run(args):
 
     if args.test_notify:
         log("--test-notify: 状態に関わらず通知を強制発火します（state.json は更新しません）")
-        _, code = notify(list(ROOMS), rooms, url, args.date)
-        return code
+        notify(list(ROOMS), [], rooms, url, args.date, args.repeat_hours)
+        return 0
 
     previous = load_state(args.state)
     if not previous:
         log("前回の状態がありません（初回実行）")
 
-    newly = detect_newly_available(rooms, previous)
+    new_keys, cont_keys = decide_notifications(rooms, previous, now, args.repeat_hours)
 
-    exit_code = 0
-    if newly:
-        log(f"空きを検知: {', '.join(newly)}")
-        _, exit_code = notify(newly, rooms, url, args.date)
+    if new_keys or cont_keys:
+        if new_keys:
+            log(f"空きを検知: {', '.join(new_keys)}")
+        if cont_keys:
+            log(f"空きあり継続中（再通知）: {', '.join(cont_keys)}")
+        notify(new_keys, cont_keys, rooms, url, args.date, args.repeat_hours)
     else:
-        log("空きあり→の変化はありません。通知しません")
+        log("通知対象はありません")
 
-    # ここまで来た＝取得もパースも成功。状態を確定させる。
+    # ここまで来た＝取得もパースも通知も成功。状態を確定させる。
     if args.file and not args.write_state_from_file:
         log("--file モードのため state.json は更新しません（--write-state-from-file で上書き可）")
     else:
-        save_state(args.state, rooms, args.date)
+        save_state(args.state, rooms, previous, new_keys + cont_keys, now, args.date)
         log(f"状態を保存しました: {args.state}")
 
-    return exit_code
+    return 0
 
 
 def main():
@@ -380,6 +456,10 @@ def main():
     ap.add_argument("--file", help="実サイトの代わりにローカルHTMLを読む（テスト用）")
     ap.add_argument("--state", default="state.json", help="状態ファイルのパス")
     ap.add_argument("--test-notify", action="store_true", help="通知処理を強制発火する")
+    ap.add_argument(
+        "--repeat-hours", type=float, default=DEFAULT_REPEAT_HOURS,
+        help=f"空きあり継続中の再通知間隔（時間、既定 {DEFAULT_REPEAT_HOURS:g}）",
+    )
     ap.add_argument(
         "--write-state-from-file", action="store_true",
         help="--file モードでも state.json を更新する（テスト用）",
@@ -391,7 +471,7 @@ def main():
     except MonitorError as exc:
         log(f"エラー: {exc}")
         log("state.json は更新していません")
-        return 2
+        return 1
 
 
 if __name__ == "__main__":
