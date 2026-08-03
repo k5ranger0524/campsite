@@ -168,7 +168,7 @@ def find_date_column(ths, target, room_id):
     col = (target - base).days
     if not (0 <= col < len(ths)):
         raise MonitorError(
-            f"{room_id}: {target:%-m/%-d} は表示期間外です "
+            f"{room_id}: {target.month}/{target.day} は表示期間外です "
             f"(表示は {base:%Y-%m-%d} から {len(ths)}日分)"
         )
 
@@ -183,7 +183,7 @@ def find_date_column(ths, target, room_id):
     if label[2] != target.day or (label[0] == "md" and label[1] != target.month):
         shown = spans[0].get_text(strip=True)
         raise MonitorError(
-            f"{room_id}: 列{col} は {target:%-m/%-d} のはずですが表示は {shown!r} です。"
+            f"{room_id}: 列{col} は {target.month}/{target.day} のはずですが表示は {shown!r} です。"
             f"表の構造が変わった可能性があります"
         )
 
@@ -233,7 +233,7 @@ def find_room_state(li, target):
     status, icon_cls = status_from_cell(td)
     if status is None:
         raise MonitorError(
-            f"{li.get('id')}: {target:%-m/%-d} の td に既知のアイコンclassがありません: "
+            f"{li.get('id')}: {target.month}/{target.day} の td に既知のアイコンclassがありません: "
             f"{str(td)[:200]}"
         )
 
