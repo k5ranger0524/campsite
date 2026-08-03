@@ -172,7 +172,24 @@ def main():
     code, sent = run("shifted.html", s2)
     eq("exit 0", code, 0)
     st = read_state(s2)
-    eq("F1 は空きなし", st["rooms"]["F1"]["status"], "full")
+    # 9/19 の列(=列2)だけ phone にしてあるので、この値が出れば列を正しく引けている
+    eq("列2(9/19)を読んでいる", st["rooms"]["F1"]["status"], "phone")
+
+    print("\n== 8b. 先頭列以外の日付も引ける（月付き表記が無い列） ==")
+    s2b = os.path.join(tmp, "col.json")
+    code, sent = run("all_full.html", s2b, "--date", "2026-09-21")
+    eq("9/21 は exit 0", code, 0)
+    eq("9/21 は空きあり", read_state(s2b)["rooms"]["F1"]["status"], "available")
+
+    s2c = os.path.join(tmp, "col2.json")
+    code, sent = run("all_full.html", s2c, "--date", "2026-10-02")
+    eq("月跨ぎの 10/2 も exit 0", code, 0)
+    eq("10/2 は空きあり", read_state(s2c)["rooms"]["F1"]["status"], "available")
+
+    s2d = os.path.join(tmp, "col3.json")
+    code, sent = run("all_full.html", s2d, "--date", "2026-10-03")
+    eq("表示期間外は exit 1", code, 1)
+    check("state.json を作らない", not os.path.exists(s2d))
 
     print("\n== 9. NTFY_TOPIC 未設定は起動直後に exit 1 ==")
     s3 = os.path.join(tmp, "cfg.json")
@@ -194,6 +211,12 @@ def main():
 
     code, sent = run("does_not_exist.html", state)
     eq("存在しないファイルは exit 1", code, 1)
+    check("state.json 未変更", open(state, encoding="utf-8").read() == before)
+
+    # ヘッダの日付が飛んでいる場合、オフセットで求めた列が目的日と食い違う。
+    # 先頭列は正しいままなので、先頭列以外を狙って初めて検出できる。
+    code, sent = run("header_drift.html", state, "--date", "2026-09-21")
+    eq("ヘッダ日付のずれを検出して exit 1", code, 1)
     check("state.json 未変更", open(state, encoding="utf-8").read() == before)
 
     print("\n== 11. ntfy 送信失敗は exit 1 かつ state.json を更新しない ==")

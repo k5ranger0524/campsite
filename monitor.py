@@ -112,18 +112,89 @@ def fetch_html(url):
 # --------------------------------------------------------------------------
 # パース
 # --------------------------------------------------------------------------
-def date_label(date_str):
-    """'2026-09-19' → '9/19'（th の span テキストと同じ形式）"""
-    d = datetime.strptime(date_str, "%Y-%m-%d")
-    return f"{d.month}/{d.day}"
+def parse_header_label(text):
+    """th の span[0] を解釈する。
+
+    実サイトでは月付き表記は先頭列にしかない:
+        先頭列   "9/19"  → ("md", 9, 19)
+        2列目以降 "20"    → ("d", None, 20)
+    """
+    text = (text or "").strip()
+    m = re.search(r"(\d{1,2})\s*/\s*(\d{1,2})", text)
+    if m:
+        return "md", int(m.group(1)), int(m.group(2))
+    m = re.fullmatch(r"\s*(\d{1,2})\s*", text)
+    if m:
+        return "d", None, int(m.group(1))
+    return None
 
 
-def normalize_label(text):
-    """'09/19' や ' 9 / 19 ' を '9/19' に揃える。"""
-    m = re.search(r"(\d{1,2})\s*/\s*(\d{1,2})", text or "")
-    if not m:
+def infer_base_date(month, day, target):
+    """先頭列の 'M/D' に年を補って実日付にする。
+
+    年は表記に無いので、target に最も近い年を選ぶ（年跨ぎの表示期間に対応）。
+    """
+    candidates = []
+    for year in (target.year - 1, target.year, target.year + 1):
+        try:
+            candidates.append(datetime(year, month, day).date())
+        except ValueError:
+            continue        # 2/29 など
+    if not candidates:
         return None
-    return f"{int(m.group(1))}/{int(m.group(2))}"
+    return min(candidates, key=lambda d: abs((d - target).days))
+
+
+def find_date_column(ths, target, room_id):
+    """目的の日付が何列目かを求める。
+
+    月付き表記は先頭列にしか無いため、ラベルの総当たり一致では列0しか引けない。
+    先頭列を基準日として「何日後か」で列を決め、そのうえで
+    その列のラベルが実際に目的の日と一致するか検証する。
+    """
+    spans = ths[0].find_all("span")
+    head = parse_header_label(spans[0].get_text(strip=True)) if spans else None
+    if not head or head[0] != "md":
+        raise MonitorError(
+            f"{room_id}: 先頭列から基準日を読めません "
+            f"(span[0]={spans[0].get_text(strip=True)!r} / 月付き表記を期待)"
+            if spans else f"{room_id}: 先頭列に span がありません"
+        )
+
+    base = infer_base_date(head[1], head[2], target)
+    if base is None:
+        raise MonitorError(f"{room_id}: 先頭列の日付 {head[1]}/{head[2]} を解釈できません")
+
+    col = (target - base).days
+    if not (0 <= col < len(ths)):
+        raise MonitorError(
+            f"{room_id}: {target:%-m/%-d} は表示期間外です "
+            f"(表示は {base:%Y-%m-%d} から {len(ths)}日分)"
+        )
+
+    # 求めた列が本当に目的の日か検証する（列の増減など構造変化の検出）
+    spans = ths[col].find_all("span")
+    label = parse_header_label(spans[0].get_text(strip=True)) if spans else None
+    if label is None:
+        raise MonitorError(
+            f"{room_id}: 列{col} の日付ラベルを読めません "
+            f"(span={[s.get_text(strip=True) for s in spans]})"
+        )
+    if label[2] != target.day or (label[0] == "md" and label[1] != target.month):
+        shown = spans[0].get_text(strip=True)
+        raise MonitorError(
+            f"{room_id}: 列{col} は {target:%-m/%-d} のはずですが表示は {shown!r} です。"
+            f"表の構造が変わった可能性があります"
+        )
+
+    # 曜日も一致するか確認する（不一致は警告にとどめる）
+    if len(spans) > 1:
+        want_w = "月火水木金土日"[target.weekday()]
+        got_w = spans[1].get_text(strip=True)
+        if got_w and got_w != want_w:
+            log(f"警告: {room_id}: 列{col} の曜日が {got_w!r}（{want_w!r} を期待）")
+
+    return col
 
 
 def status_from_cell(td):
@@ -135,10 +206,10 @@ def status_from_cell(td):
     return None, None
 
 
-def find_room_state(li, want_label):
+def find_room_state(li, target):
     """1サイト分の li から、目的の日付の状態を取り出す。
 
-    日付列はインデックス決め打ちにせず、th の span テキストが一致する列を探す。
+    日付列はインデックス決め打ちにせず、先頭列の日付からの差分で求める。
     """
     name_el = li.select_one("dl.webc_avlbl_item dt")
     name = name_el.get_text(strip=True) if name_el else None
@@ -156,30 +227,13 @@ def find_room_state(li, want_label):
             f"{li.get('id')}: th({len(ths)})とtd({len(tds)})の数が一致しません。構造が変わった可能性があります"
         )
 
-    # th の span[0] が日付ラベル
-    col = None
-    seen = []
-    for idx, th in enumerate(ths):
-        spans = th.find_all("span")
-        if not spans:
-            continue
-        label = normalize_label(spans[0].get_text(strip=True))
-        if label:
-            seen.append(label)
-        if label == want_label:
-            col = idx
-            break
-
-    if col is None:
-        raise MonitorError(
-            f"{li.get('id')}: 日付 {want_label} の列が見つかりません（表示中: {seen}）"
-        )
+    col = find_date_column(ths, target, li.get("id"))
 
     td = tds[col]
     status, icon_cls = status_from_cell(td)
     if status is None:
         raise MonitorError(
-            f"{li.get('id')}: {want_label} の td に既知のアイコンclassがありません: "
+            f"{li.get('id')}: {target:%-m/%-d} の td に既知のアイコンclassがありません: "
             f"{str(td)[:200]}"
         )
 
@@ -199,7 +253,7 @@ def find_room_state(li, want_label):
 def parse(html, date_str):
     """F1〜F4 すべての状態を返す。1つでも欠けたら MonitorError。"""
     soup = BeautifulSoup(html, "lxml")
-    want = date_label(date_str)
+    target = datetime.strptime(date_str, "%Y-%m-%d").date()
 
     result = {}
     missing = []
@@ -208,7 +262,7 @@ def parse(html, date_str):
         if li is None:
             missing.append(f"{key}({room_id})")
             continue
-        result[key] = find_room_state(li, want)
+        result[key] = find_room_state(li, target)
 
     if missing:
         raise MonitorError(

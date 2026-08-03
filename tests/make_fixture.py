@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """テスト用のHTMLフィクスチャを生成する。
 
-【重要】ここで生成するHTMLは、指示で与えられたHTML構造の仕様に基づいて
-私が組み立てた「合成データ」であり、実サイトから取得したものではない。
-monitor.py のパース処理・状態遷移・エラー処理が動くことの確認にしか使えない。
-仕様そのものが実サイトと一致しているかは、実サイトの debug.html でしか検証できない。
+【重要】ここで生成するHTMLは合成データであり、実サイトから取得したものではない。
+ただしヘッダの表記は実サイトの debug.html を確認して合わせてある:
+
+    先頭列   <span>9/19</span><span>土</span>   ← 月付きはここだけ
+    2列目以降 <span>20</span><span>日</span>     ← 日のみ
 
 使い方:
     python3 tests/make_fixture.py            # 全パターンを tests/fixtures/ に生成
 """
 
 import os
+from datetime import date, timedelta
 
 ROOMS = [
     ("room_24246", "【F1】3家族サイト 大"),
@@ -19,33 +21,45 @@ ROOMS = [
     ("room_24249", "【F4】3家族サイト 大"),
 ]
 
-# 14日分の日付ラベルと曜日
-DAYS = [
-    ("9/19", "土"), ("9/20", "日"), ("9/21", "月"), ("9/22", "火"),
-    ("9/23", "水"), ("9/24", "木"), ("9/25", "金"), ("9/26", "土"),
-    ("9/27", "日"), ("9/28", "月"), ("9/29", "火"), ("9/30", "水"),
-    ("10/1", "木"), ("10/2", "金"),
-]
+BASE = date(2026, 9, 19)
+NDAYS = 14
+WEEK = "月火水木金土日"
 
 ICONS = {
-    "available": "fa-circle",
-    "full": "fa-xmark",
-    "phone": "fa-square-phone",
-    "closed": "fa-minus",
+    "available": ("fa-regular", "fa-circle"),
+    "full": ("fa-solid", "fa-xmark"),
+    "phone": ("fa-solid", "fa-square-phone"),
+    "closed": ("fa-solid", "fa-minus"),
 }
 
 
-def cell(status, day):
-    icon = f'<i class="fa-solid {ICONS[status]}"></i>'
+def header(d, first):
+    """先頭列だけ月付き。2列目以降は日のみ。"""
+    label = f"{d.month}/{d.day}" if first else f"{d.day}"
+    return f"<th><div><span>{label}</span><span>{WEEK[d.weekday()]}</span></div></th>"
+
+
+def cell(status, room_id, d):
+    style, icon = ICONS[status]
+    i = f'<i class="{style} {icon}"></i>'
     if status == "available":
         # 空きありの td のみリンクを持つ
-        href = f"/client/autocamp-akagi/0/plan/reserve?room=1&amp;date=2026-{day.replace('/', '-')}"
-        return f'<td><a href="{href}">{icon}</a></td>'
-    return f"<td>{icon}</td>"
+        href = (
+            f"https://reserve.489ban.net/client/autocamp-akagi/0/plan/room/"
+            f"{room_id.split('_')[1]}/stay?date={d:%Y-%m-%d}&amp;roomCount=1#chooseFromRoom"
+        )
+        return f'<td><div><a href="{href}">{i}</a></div></td>'
+    return f"<td><div>{i}</div></td>"
 
 
-def build(statuses_by_room, days=DAYS, room_list=ROOMS):
-    """statuses_by_room: {room_id: [14個の status]}"""
+def build(statuses_by_room, base=BASE, ndays=NDAYS, room_list=ROOMS, header_days=None):
+    """statuses_by_room: {room_id: [ndays個の status]}
+
+    header_days を渡すとヘッダの日付だけ差し替えられる（構造変化のテスト用）。
+    """
+    days = [base + timedelta(days=i) for i in range(ndays)]
+    hdays = header_days or days
+
     parts = [
         "<!DOCTYPE html><html lang='ja'><head><meta charset='utf-8'>",
         "<title>空室状況</title></head><body>",
@@ -53,10 +67,8 @@ def build(statuses_by_room, days=DAYS, room_list=ROOMS):
     ]
     for room_id, name in room_list:
         statuses = statuses_by_room[room_id]
-        ths = "".join(
-            f"<th><span>{d}</span><span>{w}</span></th>" for d, w in days
-        )
-        tds = "".join(cell(s, days[i][0]) for i, s in enumerate(statuses))
+        ths = "".join(header(d, i == 0) for i, d in enumerate(hdays))
+        tds = "".join(cell(s, room_id, days[i]) for i, s in enumerate(statuses))
         parts.append(f"""
 <li id="{room_id}">
   <dl class="webc_avlbl_item"><dt>{name}</dt><dd>1泊</dd></dl>
@@ -71,29 +83,25 @@ def build(statuses_by_room, days=DAYS, room_list=ROOMS):
     return "\n".join(parts)
 
 
-def uniform(status, n=14):
-    return [status] * n
-
-
 def main():
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
     os.makedirs(out, exist_ok=True)
 
     def write(name, html):
-        path = os.path.join(out, name)
-        with open(path, "w", encoding="utf-8") as f:
+        with open(os.path.join(out, name), "w", encoding="utf-8") as f:
             f.write(html)
-        print("生成:", path)
+        print("生成:", os.path.join(out, name))
 
     ids = [r[0] for r in ROOMS]
 
     # 1. 実測値どおり: F1〜F4 すべて 9/19 は空きなし
-    all_full = {rid: uniform("full") for rid in ids}
-    # 他の日にはバリエーションを入れておく（列の取り違えを検出するため）
+    #    他の日にはバリエーションを入れる（列の取り違えを検出するため）
+    all_full = {rid: ["full"] * NDAYS for rid in ids}
     for rid in ids:
-        all_full[rid][1] = "available"   # 9/20 は空きあり
-        all_full[rid][5] = "phone"
-        all_full[rid][9] = "closed"
+        all_full[rid][2] = "available"    # 9/21
+        all_full[rid][5] = "phone"        # 9/24
+        all_full[rid][9] = "closed"       # 9/28
+        all_full[rid][13] = "available"   # 10/2 (月跨ぎ)
     write("all_full.html", build(all_full))
 
     # 2. F2 と F3 の 9/19 が空きあり
@@ -102,20 +110,28 @@ def main():
     some_open["room_24248"][0] = "available"
     write("f2f3_available.html", build(some_open))
 
-    # 3. 表示期間がずれて 9/19 が先頭でない（列探索が効くか）
-    shifted_days = [("9/17", "木"), ("9/18", "金")] + DAYS[:12]
-    write("shifted.html", build(all_full, days=shifted_days))
+    # 3. 表示期間が2日前倒し → 9/19 は列2 になる
+    #    どの列を読んだか一意に分かるよう、前後の列と違う状態を置く
+    shifted = {rid: ["full"] * NDAYS for rid in ids}
+    for rid in ids:
+        shifted[rid][1] = "available"   # 9/18
+        shifted[rid][2] = "phone"       # 9/19 ← 目的の列
+        shifted[rid][3] = "closed"      # 9/20
+    write("shifted.html", build(shifted, base=date(2026, 9, 17)))
 
     # 4. 9/19 が表示範囲に存在しない
-    no_target = [(f"10/{i + 5}", "日") for i in range(14)]
-    write("date_missing.html", build(all_full, days=no_target))
+    write("date_missing.html", build(all_full, base=date(2026, 10, 5)))
 
     # 5. F4 が存在しない（構造変化）
     write("room_missing.html", build(all_full, room_list=ROOMS[:3]))
 
     # 6. 未知のアイコンclass（構造変化）
-    broken = build(all_full).replace("fa-xmark", "fa-unknown-icon")
-    write("unknown_icon.html", broken)
+    write("unknown_icon.html", build(all_full).replace("fa-xmark", "fa-unknown-icon"))
+
+    # 7. ヘッダの日付が飛んでいる（列の増減など構造変化）
+    #    先頭は 9/19 のままだが、以降が1日ずつずれている
+    drift = [BASE] + [BASE + timedelta(days=i + 2) for i in range(NDAYS - 1)]
+    write("header_drift.html", build(all_full, header_days=drift))
 
 
 if __name__ == "__main__":
