@@ -174,7 +174,7 @@ ntfy.sh への送信は差し替えて検証するので、実際の送信は行
 実サイトのHTMLでの確認:
 
 ```bash
-python3 monitor.py --file 'debug.html .html'    # F1〜F4 すべて「空きなし」になる
+python3 monitor.py --file debug.html    # F1〜F4 すべて「空きなし」になる
 ```
 
 ## GitHub Actions での定期実行
