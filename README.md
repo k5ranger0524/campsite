@@ -179,47 +179,23 @@ python3 monitor.py --file debug.html    # F1〜F4 すべて「空きなし」に
 
 ## GitHub Actions での定期実行
 
-`state.json` を実行間で引き継ぐ必要がある（引き継がないと毎回初回扱いになり、
-空いている間ずっと通知が飛び続ける）。リポジトリにコミットして持ち回るのが単純。
+ワークフローは [`.github/workflows/akagi.yml`](.github/workflows/akagi.yml) に用意済み。
+30分ごとに実行し、`state.json` をリポジトリにコミットして実行間で引き継ぐ
+（引き継がないと毎回初回扱いになり、空いている間ずっと通知が飛び続ける）。
 
-`NTFY_TOPIC` は Settings → Secrets and variables → Actions に登録する。
+### 設定手順（ブラウザだけで完結）
 
-```yaml
-name: akagi-monitor
-on:
-  schedule:
-    - cron: '*/30 * * * *'   # 30分ごと (UTC)
-  workflow_dispatch:
+1. **トピック名を決める** — 名前を知っていれば誰でも購読できるので推測されない文字列にする
+2. **スマホに ntfy アプリを入れ**、そのトピック名を購読する
+3. GitHubの **Settings → Secrets and variables → Actions → New repository secret** で
+   Name に `NTFY_TOPIC`、Secret にトピック名を登録
+4. **Actions タブ → akagi-monitor → Run workflow** で
+   `通知テスト` に **✓** を入れて実行 → スマホに通知が届けば設定完了
 
-permissions:
-  contents: write
+以降は30分ごとに自動で走る。手順4のテストは何度でも実行してよい
+（`--test-notify` は `state.json` を更新しないため、本番の通知状態に影響しない）。
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install -r requirements.txt
-
-      - name: 空き状況をチェック
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python3 monitor.py
-
-      - name: state.json を保存
-        if: always()
-        run: |
-          if [ -n "$(git status --porcelain state.json)" ]; then
-            git config user.name  github-actions
-            git config user.email github-actions@github.com
-            git add state.json
-            git commit -m "update state"
-            git push
-          fi
-```
+### 動作の理由
 
 `if: always()` を付けてよい理由: `monitor.py` は**正常にパースできたときしか
 `state.json` を書かない**。異常終了(`exit 1`)の回はファイルが変化しないので、
