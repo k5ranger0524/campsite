@@ -1,0 +1,34 @@
+# 監視対象の一覧。
+#
+# 同じ予約システム（adapter）の別施設を足すときは、ここにブロックを1つ増やすだけでよい。
+# 未対応の予約システムを足すときは adapters/ にモジュールを1つ書く。
+#
+# 対象に何を書けばよいか分からないときは discover.py で洗い出せる:
+#     python3 discover.py --adapter ban489 --facility <施設名> --date 2026-09-19
+
+defaults:
+  repeat_hours: 2        # 空きが続く間、何時間ごとに再通知するか
+
+targets:
+  - id: akagi-family
+    name: 赤城山オートキャンプ場 3家族サイト
+    adapter: ban489
+    date: 2026-09-19
+    enabled: true
+    config:
+      facility: autocamp-akagi
+      items:
+        F1: room_24246
+        F2: room_24247
+        F3: room_24248
+        F4: room_24249
+
+  # 例) 同じ489banの別施設を足す場合（facility と items を差し替えるだけ）
+  # - id: example-camp
+  #   name: 別のキャンプ場
+  #   adapter: ban489
+  #   date: 2026-10-10
+  #   config:
+  #     facility: example-slug
+  #     items:
+  #       A1: room_12345

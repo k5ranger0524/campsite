@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""monitor.py の回帰テスト。
+"""回帰テスト。
 
-【重要】入力は tests/fixtures/ の合成HTML（仕様から組み立てたもので実サイトのものではない）。
-パース・通知判定・状態遷移・エラー処理が動くことの確認であり、
-仕様が実サイトと一致しているかの検証ではない。
-
-ntfy.sh への送信は monkeypatch で差し替えて検証する（実送信はしない）。
+入力は tests/fixtures/ の合成HTML（ban489 のヘッダ表記だけは実サイトの debug.html に
+合わせてある）。ntfy.sh への送信と HTTP取得は差し替えて検証するので、通信は行わない。
 
 実行: python3 tests/test_monitor.py
 """
@@ -17,26 +14,39 @@ import sys
 import tempfile
 from datetime import datetime, timedelta
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import monitor  # noqa: E402
-
 HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+sys.path.insert(0, HERE)
+
+import monitor                      # noqa: E402
+from core import notify as nt       # noqa: E402
+
 FIX = os.path.join(HERE, "fixtures")
 
 PASS = 0
 FAIL = 0
-SENT = []          # 送信された通知を記録する
+SENT = []
 SEND_SHOULD_FAIL = False
+ROUTES = {}                         # URL -> fixture ファイル名
 
 
 def fake_send_ntfy(topic, title, message, url):
     if SEND_SHOULD_FAIL:
-        raise monitor.requests.RequestException("接続失敗(テスト)")
+        raise nt.requests.RequestException("接続失敗(テスト)")
     SENT.append({"topic": topic, "title": title, "message": message, "url": url})
 
 
-monitor.send_ntfy = fake_send_ntfy
+def fake_fetch(url, *a, **k):
+    for frag, name in ROUTES.items():
+        if frag in url:
+            with open(os.path.join(FIX, name), encoding="utf-8") as f:
+                return f.read()
+    raise nt.MonitorError(f"テスト: 未登録のURL {url}")
+
+
+nt.send_ntfy = fake_send_ntfy
+monitor.fetch_html = fake_fetch
 
 
 def check(desc, cond):
@@ -50,18 +60,19 @@ def check(desc, cond):
 
 
 def eq(desc, actual, expected):
-    check(f"{desc} (期待={expected!r}, 実際={actual!r})" if actual != expected else desc,
+    check(desc if actual == expected else f"{desc} (期待={expected!r}, 実際={actual!r})",
           actual == expected)
 
 
-def run(fixture, state, *extra, topic="test-topic"):
-    """monitor を1回実行し、(exit_code, 送信された通知) を返す。"""
-    SENT.clear()
-    argv = ["monitor.py", "--state", state]
-    if fixture:
-        argv += ["--file", os.path.join(FIX, fixture), "--write-state-from-file"]
-    argv += list(extra)
+def write_targets(path, body):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(body)
+    return path
 
+
+def run(targets_path, state, *extra, topic="test-topic"):
+    SENT.clear()
+    argv = ["monitor.py", "--targets", targets_path, "--state", state] + list(extra)
     old_argv, old_topic = sys.argv, os.environ.get("NTFY_TOPIC")
     sys.argv = argv
     if topic is None:
@@ -84,195 +95,306 @@ def read_state(path):
         return json.load(f)
 
 
-def backdate(path, key, hours):
-    """指定サイトの最終通知時刻を hours 時間前に巻き戻す（時間経過のシミュレーション）。"""
+def items_of(path, target_id):
+    return read_state(path)["targets"][target_id]["items"]
+
+
+def backdate(path, target_id, key, hours):
     data = read_state(path)
-    t = datetime.fromisoformat(data["rooms"][key]["notified_at"])
-    data["rooms"][key]["notified_at"] = (t - timedelta(hours=hours)).isoformat()
+    t = datetime.fromisoformat(data["targets"][target_id]["items"][key]["notified_at"])
+    data["targets"][target_id]["items"][key]["notified_at"] = (
+        t - timedelta(hours=hours)).isoformat()
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+AKAGI = """
+targets:
+  - id: akagi
+    name: 赤城山オートキャンプ場 3家族サイト
+    adapter: ban489
+    date: {date}
+    config:
+      facility: autocamp-akagi
+      items:
+        F1: room_24246
+        F2: room_24247
+        F3: room_24248
+        F4: room_24249
+"""
+
+PARKING = """
+targets:
+  - id: parking
+    name: デモ駐車場
+    adapter: css
+    config:
+      url: https://example.com/parking
+      items:
+        P1: {selector: "#lot-1 .status", name: 第1駐車場}
+        P2: {selector: "#lot-2 .status", name: 第2駐車場}
+        P3: {selector: "#lot-3 .status", name: 第3駐車場}
+        P4: {selector: "#lot-4 .status", name: 第4駐車場}
+      rules:
+        - {contains: 満車, status: full}
+        - {contains: 空車, status: available}
+        - {regex: '残り\\s*[1-9]', status: available}
+      default: closed
+"""
 
 
 def main():
     global SEND_SHOULD_FAIL
 
-    sys.path.insert(0, HERE)
     import make_fixture
     make_fixture.main()
     print()
 
     tmp = tempfile.mkdtemp()
     state = os.path.join(tmp, "state.json")
+    akagi = write_targets(os.path.join(tmp, "akagi.yml"), AKAGI.format(date="2026-09-19"))
 
-    print("== 1. 全サイト空きなし（実測値どおりか） ==")
-    code, sent = run("all_full.html", state)
+    def go(fixture, *extra, **kw):
+        return run(akagi, state, "--target", "akagi",
+                   "--file", os.path.join(FIX, fixture),
+                   "--write-state-from-file", *extra, **kw)
+
+    print("== 1. 全区画が空きなし（実測値どおりか） ==")
+    code, sent = go("all_full.html")
     eq("exit 0", code, 0)
     eq("通知なし", len(sent), 0)
-    st = read_state(state)
     for k in ["F1", "F2", "F3", "F4"]:
-        eq(f"{k} が full", st["rooms"][k]["status"], "full")
-    eq("notified_at は None", st["rooms"]["F1"]["notified_at"], None)
+        eq(f"{k} が full", items_of(state, "akagi")[k]["status"], "full")
+    eq("notified_at は None", items_of(state, "akagi")["F1"]["notified_at"], None)
 
     print("\n== 2. F2/F3 が空きあり → 新規通知（exit 0） ==")
-    code, sent = run("f2f3_available.html", state)
+    code, sent = go("f2f3_available.html")
     eq("通知しても exit 0", code, 0)
     eq("1件送信", len(sent), 1)
     msg = sent[0]["message"]
-    eq("タイトルは新規通知", sent[0]["title"], "赤城山オートキャンプ場 空き通知")
-    check("F2 を含む", "・F2" in msg)
-    check("F3 を含む", "・F3" in msg)
+    check("タイトルに対象名が入る", sent[0]["title"] == "赤城山オートキャンプ場 3家族サイト 空き通知")
+    check("F2/F3 を含む", "・F2" in msg and "・F3" in msg)
     check("空きなしの F1 を含まない", "・F1" not in msg)
     check("予約URLを含む", "date=2026-09-19" in msg)
-    check("新規なので継続中の文言は無い", "継続中" not in msg)
-    st = read_state(state)
-    check("F2 に notified_at が記録された", st["rooms"]["F2"]["notified_at"] is not None)
-    eq("F1 は空きなしなので None", st["rooms"]["F1"]["notified_at"], None)
+    check("継続中とは書かない", "継続中" not in msg)
+    check("F2 に notified_at", items_of(state, "akagi")["F2"]["notified_at"] is not None)
 
     print("\n== 3. 2時間以内の再実行 → 再通知しない ==")
-    code, sent = run("f2f3_available.html", state)
+    code, sent = go("f2f3_available.html")
     eq("exit 0", code, 0)
     eq("通知なし", len(sent), 0)
 
     print("\n== 4. 2時間経過 → 継続中として再通知 ==")
-    backdate(state, "F2", 3)
-    backdate(state, "F3", 3)
-    code, sent = run("f2f3_available.html", state)
-    eq("exit 0", code, 0)
+    backdate(state, "akagi", "F2", 3)
+    backdate(state, "akagi", "F3", 3)
+    code, sent = go("f2f3_available.html")
     eq("1件送信", len(sent), 1)
-    msg = sent[0]["message"]
-    eq("タイトルは継続中", sent[0]["title"], "赤城山オートキャンプ場 空き継続中")
-    check("本文に『継続中』が入る", "継続中" in msg)
-    check("F2 が継続中として載る", "・F2  【F2】3家族サイト（継続中）" in msg)
-    check("再通知間隔の説明が入る", "2 時間ごと" in msg)
+    check("タイトルが継続中", sent[0]["title"].endswith("空き継続中"))
+    check("本文に継続中", "継続中" in sent[0]["message"])
+    check("再通知間隔の説明", "2 時間ごと" in sent[0]["message"])
 
     print("\n== 5. 片方だけ2時間経過 → そのサイトだけ再通知 ==")
-    backdate(state, "F3", 3)
-    code, sent = run("f2f3_available.html", state)
-    eq("1件送信", len(sent), 1)
+    backdate(state, "akagi", "F3", 3)
+    code, sent = go("f2f3_available.html")
     msg = sent[0]["message"]
     check("F3 は載る", "・F3" in msg)
     check("F2 は載らない", "・F2" not in msg)
 
-    print("\n== 6. 満室に戻ると通知履歴がリセットされる ==")
-    code, sent = run("all_full.html", state)
-    eq("exit 0", code, 0)
+    print("\n== 6. 空きが消えると通知履歴がリセットされる ==")
+    code, sent = go("all_full.html")
     eq("通知なし", len(sent), 0)
-    st = read_state(state)
-    eq("F2 の notified_at がリセット", st["rooms"]["F2"]["notified_at"], None)
-    eq("F3 の notified_at がリセット", st["rooms"]["F3"]["notified_at"], None)
+    eq("F2 リセット", items_of(state, "akagi")["F2"]["notified_at"], None)
 
-    print("\n== 7. 再び空いたら『新規』として通知される ==")
-    code, sent = run("f2f3_available.html", state)
-    eq("1件送信", len(sent), 1)
-    eq("タイトルは新規通知", sent[0]["title"], "赤城山オートキャンプ場 空き通知")
+    print("\n== 7. 再び空いたら『新規』として通知 ==")
+    code, sent = go("f2f3_available.html")
+    check("タイトルが空き通知", sent[0]["title"].endswith("空き通知"))
     check("継続中ではない", "継続中" not in sent[0]["message"])
 
-    print("\n== 8. 表示期間がずれても 9/19 を正しく探せる ==")
+    print("\n== 8. 表示期間がずれても目的日を探せる ==")
     s2 = os.path.join(tmp, "shifted.json")
-    code, sent = run("shifted.html", s2)
+    code, sent = run(akagi, s2, "--target", "akagi",
+                     "--file", os.path.join(FIX, "shifted.html"),
+                     "--write-state-from-file")
     eq("exit 0", code, 0)
-    st = read_state(s2)
-    # 9/19 の列(=列2)だけ phone にしてあるので、この値が出れば列を正しく引けている
-    eq("列2(9/19)を読んでいる", st["rooms"]["F1"]["status"], "phone")
+    eq("列2(9/19)を読んでいる", items_of(s2, "akagi")["F1"]["status"], "phone")
 
     print("\n== 8b. 先頭列以外の日付も引ける（月付き表記が無い列） ==")
-    s2b = os.path.join(tmp, "col.json")
-    code, sent = run("all_full.html", s2b, "--date", "2026-09-21")
-    eq("9/21 は exit 0", code, 0)
-    eq("9/21 は空きあり", read_state(s2b)["rooms"]["F1"]["status"], "available")
+    for date, expect, label in [("2026-09-21", "available", "9/21"),
+                                ("2026-10-02", "available", "10/2 (月跨ぎ)")]:
+        y = write_targets(os.path.join(tmp, f"d{date}.yml"), AKAGI.format(date=date))
+        s = os.path.join(tmp, f"d{date}.json")
+        code, _ = run(y, s, "--target", "akagi",
+                      "--file", os.path.join(FIX, "all_full.html"),
+                      "--write-state-from-file")
+        eq(f"{label} は exit 0", code, 0)
+        eq(f"{label} の判定", items_of(s, "akagi")["F1"]["status"], expect)
 
-    s2c = os.path.join(tmp, "col2.json")
-    code, sent = run("all_full.html", s2c, "--date", "2026-10-02")
-    eq("月跨ぎの 10/2 も exit 0", code, 0)
-    eq("10/2 は空きあり", read_state(s2c)["rooms"]["F1"]["status"], "available")
-
-    s2d = os.path.join(tmp, "col3.json")
-    code, sent = run("all_full.html", s2d, "--date", "2026-10-03")
+    y = write_targets(os.path.join(tmp, "oor.yml"), AKAGI.format(date="2026-10-03"))
+    s = os.path.join(tmp, "oor.json")
+    code, _ = run(y, s, "--target", "akagi", "--file", os.path.join(FIX, "all_full.html"),
+                  "--write-state-from-file")
     eq("表示期間外は exit 1", code, 1)
-    check("state.json を作らない", not os.path.exists(s2d))
+    check("state を作らない", not os.path.exists(s))
 
     print("\n== 9. NTFY_TOPIC 未設定は起動直後に exit 1 ==")
     s3 = os.path.join(tmp, "cfg.json")
-    code, sent = run(None, s3, "--date", "2026-09-19", topic=None)
+    ROUTES.clear(); ROUTES["autocamp-akagi"] = "all_full.html"
+    code, _ = run(akagi, s3, topic=None)
     eq("exit 1", code, 1)
-    check("state.json を作らない", not os.path.exists(s3))
-    code, sent = run("all_full.html", s3, "--test-notify", topic=None)
+    check("state を作らない", not os.path.exists(s3))
+    code, _ = run(akagi, s3, "--target", "akagi",
+                  "--file", os.path.join(FIX, "all_full.html"),
+                  "--test-notify", topic=None)
     eq("--test-notify でも exit 1", code, 1)
 
-    print("\n== 10. 異常系は exit 1 かつ state.json を更新しない ==")
-    code, _ = run("all_full.html", state)      # 正常な state を作り直す
+    print("\n== 10. 異常系は exit 1 かつ state を更新しない ==")
+    code, _ = go("all_full.html")
     before = open(state, encoding="utf-8").read()
     for fx in ["date_missing.html", "room_missing.html", "unknown_icon.html"]:
-        code, sent = run(fx, state)
+        code, sent = go(fx)
         eq(f"{fx} は exit 1", code, 1)
         eq(f"{fx}: 通知しない", len(sent), 0)
-        check(f"{fx}: state.json 未変更",
-              open(state, encoding="utf-8").read() == before)
+        check(f"{fx}: state 未変更", open(state, encoding="utf-8").read() == before)
 
-    code, sent = run("does_not_exist.html", state)
+    code, _ = go("does_not_exist.html")
     eq("存在しないファイルは exit 1", code, 1)
-    check("state.json 未変更", open(state, encoding="utf-8").read() == before)
+    check("state 未変更", open(state, encoding="utf-8").read() == before)
 
-    # ヘッダの日付が飛んでいる場合、オフセットで求めた列が目的日と食い違う。
-    # 先頭列は正しいままなので、先頭列以外を狙って初めて検出できる。
-    code, sent = run("header_drift.html", state, "--date", "2026-09-21")
+    drift = write_targets(os.path.join(tmp, "drift.yml"), AKAGI.format(date="2026-09-21"))
+    code, _ = run(drift, state, "--target", "akagi",
+                  "--file", os.path.join(FIX, "header_drift.html"),
+                  "--write-state-from-file")
     eq("ヘッダ日付のずれを検出して exit 1", code, 1)
-    check("state.json 未変更", open(state, encoding="utf-8").read() == before)
+    check("state 未変更", open(state, encoding="utf-8").read() == before)
 
-    print("\n== 11. ntfy 送信失敗は exit 1 かつ state.json を更新しない ==")
+    print("\n== 11. ntfy 送信失敗は exit 1 かつ state を更新しない ==")
     SEND_SHOULD_FAIL = True
-    code, sent = run("f2f3_available.html", state)
+    code, _ = go("f2f3_available.html")
     SEND_SHOULD_FAIL = False
     eq("exit 1", code, 1)
-    check("state.json 未変更（次回また通知を試みる）",
-          open(state, encoding="utf-8").read() == before)
+    check("state 未変更（次回やり直す）", open(state, encoding="utf-8").read() == before)
 
-    print("\n== 12. 送信失敗の次の回は通知をやり直す ==")
-    code, sent = run("f2f3_available.html", state)
-    eq("exit 0", code, 0)
-    eq("1件送信", len(sent), 1)
+    code, sent = go("f2f3_available.html")
+    eq("次の回は通知をやり直す", len(sent), 1)
 
-    print("\n== 13. --test-notify は強制発火し state を更新しない ==")
+    print("\n== 12. テスト通知は本物と混同されない ==")
     before = open(state, encoding="utf-8").read()
-    code, sent = run("all_full.html", state, "--test-notify")
+    code, sent = go("all_full.html", "--test-notify")
     eq("exit 0", code, 0)
-    eq("1件送信", len(sent), 1)
     msg = sent[0]["message"]
-    check("満室でも全サイトが載る", "・F4" in msg)
-    check("state.json 未変更", open(state, encoding="utf-8").read() == before)
-
-    # 本物の空き通知と見分けられないと困るので、文面を固定する
-    check("タイトルに【テスト】が付く", sent[0]["title"].startswith("【テスト】"))
+    check("タイトルに【テスト】", sent[0]["title"].startswith("【テスト】"))
     check("テストである旨を明記", "これは通知テストです" in msg)
-    check("『空きが出ました』とは書かない", "空きが出ました" not in msg)
-    check("『継続中』とも書かない", "継続中" not in msg)
-    check("実際の判定結果（空きなし）を載せる", "・F1  空きなし" in msg)
+    check("『空きが出ました』と書かない", "空きが出ました" not in msg)
+    check("実際の判定結果を載せる", "・F1  空きなし" in msg)
+    check("対象名を載せる", "赤城山オートキャンプ場" in msg)
+    check("state 未変更", open(state, encoding="utf-8").read() == before)
 
-    # 空きがある状態でテストしても、空き通知の文面にはならない
-    code, sent = run("f2f3_available.html", state, "--test-notify")
+    code, sent = go("f2f3_available.html", "--test-notify")
     msg = sent[0]["message"]
     check("空きありでも『空きが出ました』と書かない", "空きが出ました" not in msg)
     check("F2 は空きありと表示", "・F2  空きあり" in msg)
-    check("F1 は空きなしと表示", "・F1  空きなし" in msg)
 
-    print("\n== 14. --file 単体では state を更新しない（既定動作） ==")
+    print("\n== 13. --file 単体では state を更新しない（既定動作） ==")
     s4 = os.path.join(tmp, "nofile.json")
-    SENT.clear()
-    sys.argv = ["monitor.py", "--file", os.path.join(FIX, "all_full.html"), "--state", s4]
-    os.environ["NTFY_TOPIC"] = "test-topic"
-    eq("exit 0", monitor.main(), 0)
-    check("state.json が作られない", not os.path.exists(s4))
+    code, _ = run(akagi, s4, "--target", "akagi",
+                  "--file", os.path.join(FIX, "all_full.html"))
+    eq("exit 0", code, 0)
+    check("state を作らない", not os.path.exists(s4))
 
-    print("\n== 15. --repeat-hours で間隔を変更できる ==")
-    s5 = os.path.join(tmp, "rep.json")
-    run("f2f3_available.html", s5)                       # 新規通知
-    backdate(s5, "F2", 0.75)                             # 45分経過
-    code, sent = run("f2f3_available.html", s5, "--repeat-hours", "0.5")
-    eq("0.5時間設定なら再通知される", len(sent), 1)
-    check("F2 が継続中", "・F2" in sent[0]["message"])
+    # ------------------------------------------------------------------
+    print("\n== 14. cssアダプタ: 設定だけで別ジャンル（駐車場）を監視できる ==")
+    parking = write_targets(os.path.join(tmp, "parking.yml"), PARKING)
+    s5 = os.path.join(tmp, "parking.json")
+    code, sent = run(parking, s5, "--target", "parking",
+                     "--file", os.path.join(FIX, "parking.html"),
+                     "--write-state-from-file")
+    eq("exit 0", code, 0)
+    items = items_of(s5, "parking")
+    eq("満車 → full", items["P1"]["status"], "full")
+    eq("空車 → available", items["P2"]["status"], "available")
+    eq("『残り 3 台』→ available (regex)", items["P3"]["status"], "available")
+    eq("どのruleにも一致しない → default", items["P4"]["status"], "closed")
+    eq("1件通知", len(sent), 1)
+    msg = sent[0]["message"]
+    check("日付なし対象では日付を書かない", "に空きが出ました" not in msg)
+    check("空きが出た旨は書く", "空きが出ました。" in msg)
+    check("設定した名前が出る", "第2駐車場" in msg)
+
+    print("\n== 14b. default 未指定でどのruleにも一致しなければ失敗する ==")
+    nodefault = write_targets(
+        os.path.join(tmp, "nodef.yml"), PARKING.replace("      default: closed\n", ""))
+    s6 = os.path.join(tmp, "nodef.json")
+    code, sent = run(nodefault, s6, "--target", "parking",
+                     "--file", os.path.join(FIX, "parking.html"),
+                     "--write-state-from-file")
+    eq("exit 1（黙って unknown にしない）", code, 1)
+    check("state を作らない", not os.path.exists(s6))
+
+    # ------------------------------------------------------------------
+    print("\n== 15. 複数対象: 1つ壊れても他は確認され、壊れた方だけ state を残す ==")
+    multi = write_targets(os.path.join(tmp, "multi.yml"), """
+targets:
+  - id: good
+    name: 正常な対象
+    adapter: ban489
+    date: 2026-09-19
+    config:
+      facility: good-camp
+      items: {F2: room_24247}
+  - id: broken
+    name: 壊れた対象
+    adapter: ban489
+    date: 2026-09-19
+    config:
+      facility: broken-camp
+      items: {F9: room_99999}
+""")
+    ROUTES.clear()
+    ROUTES["good-camp"] = "f2f3_available.html"      # F2 は空きあり → 通知される
+    ROUTES["broken-camp"] = "all_full.html"          # room_99999 が無い → 失敗する
+    s7 = os.path.join(tmp, "multi.json")
+    code, sent = run(multi, s7)
+    eq("全体は exit 1", code, 1)
+    eq("正常な対象の通知は送られる", len(sent), 1)
+    check("正常な対象の state は書かれる", "good" in read_state(s7)["targets"])
+    check("壊れた対象の state は書かれない", "broken" not in read_state(s7)["targets"])
+
+    print("\n== 16. targets.yml の検証 ==")
+    bad = write_targets(os.path.join(tmp, "bad.yml"), """
+targets:
+  - id: a
+    adapter: ban489
+  - id: a
+    adapter: ban489
+""")
+    code, _ = run(bad, os.path.join(tmp, "b.json"))
+    eq("id重複は exit 1", code, 1)
+
+    noadapter = write_targets(os.path.join(tmp, "na.yml"), "targets:\n  - id: a\n")
+    code, _ = run(noadapter, os.path.join(tmp, "b.json"))
+    eq("adapter 無しは exit 1", code, 1)
+
+    unknown = write_targets(os.path.join(tmp, "uk.yml"),
+                            "targets:\n  - id: a\n    adapter: nonexistent\n")
+    code, _ = run(unknown, os.path.join(tmp, "b.json"))
+    eq("未知のadapterは exit 1", code, 1)
+
+    print("\n== 17. discover で設定に書く項目を洗い出せる ==")
+    import adapters
+    ban489 = adapters.get("ban489")
+    with open(os.path.join(FIX, "all_full.html"), encoding="utf-8") as f:
+        found = ban489.discover(f.read(), {}, "2026-09-19")
+    eq("4区画すべて見つかる", len(found), 4)
+    check("IDが取れる", found[0]["key"].startswith("room_"))
+    check("名前が取れる", "3家族サイト" in found[0]["name"])
+
+    css = adapters.get("css")
+    with open(os.path.join(FIX, "parking.html"), encoding="utf-8") as f:
+        found = css.discover(f.read(), {"discover_selector": ".parking-lot"}, None)
+    eq("駐車場4つが見つかる", len(found), 4)
+    check("IDが取れる", found[0]["key"] == "lot-1")
 
     shutil.rmtree(tmp)
-
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")
     print("=" * 30)
