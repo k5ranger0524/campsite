@@ -413,11 +413,27 @@ def send_ntfy(topic, title, message, url):
     resp.raise_for_status()
 
 
-def notify(new_keys, cont_keys, rooms, url, date_str, repeat_hours):
-    """通知を送る。送信できなければ MonitorError（＝state を更新させない）。"""
-    title = build_title(new_keys, cont_keys)
-    message = build_message(new_keys, cont_keys, rooms, url, date_str, repeat_hours)
+def build_test_message(rooms, url, date_str):
+    """テスト通知の本文。
 
+    「空きが出ました」とは書かない。本物の空き通知と見分けられなくなるため。
+    代わりに、その時点の実際の判定結果をそのまま載せる。
+    """
+    lines = [
+        "これは通知テストです。空きが出たという意味ではありません。",
+        "",
+        f"現在の判定結果（{date_str}）:",
+    ]
+    for key in ROOMS:
+        info = rooms.get(key) or {}
+        status = STATUS_LABEL.get(info.get("status"), "不明")
+        lines.append(f"・{key}  {status}  {info.get('name') or ''}".rstrip())
+    lines += ["", "予約ページ:", url]
+    return "\n".join(lines)
+
+
+def deliver(title, message, url):
+    """通知を送る。送信できなければ MonitorError（＝state を更新させない）。"""
     log(f"―― 通知内容（{title}） ――")
     for line in message.splitlines():
         log("  " + line)
@@ -435,6 +451,22 @@ def notify(new_keys, cont_keys, rooms, url, date_str, repeat_hours):
         raise MonitorError(f"ntfy.sh への送信に失敗しました: {exc}")
 
     log(f"ntfy.sh に送信しました (topic={topic})")
+
+
+def notify(new_keys, cont_keys, rooms, url, date_str, repeat_hours):
+    deliver(
+        build_title(new_keys, cont_keys),
+        build_message(new_keys, cont_keys, rooms, url, date_str, repeat_hours),
+        url,
+    )
+
+
+def notify_test(rooms, url, date_str):
+    deliver(
+        "【テスト】赤城山オートキャンプ場 監視テスト",
+        build_test_message(rooms, url, date_str),
+        url,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -476,7 +508,7 @@ def run(args):
 
     if args.test_notify:
         log("--test-notify: 状態に関わらず通知を強制発火します（state.json は更新しません）")
-        notify(list(ROOMS), [], rooms, url, args.date, args.repeat_hours)
+        notify_test(rooms, url, args.date)
         return 0
 
     previous = load_state(args.state)

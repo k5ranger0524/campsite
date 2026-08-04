@@ -237,8 +237,23 @@ def main():
     code, sent = run("all_full.html", state, "--test-notify")
     eq("exit 0", code, 0)
     eq("1件送信", len(sent), 1)
-    check("満室でも全サイトが載る", "・F4" in sent[0]["message"])
+    msg = sent[0]["message"]
+    check("満室でも全サイトが載る", "・F4" in msg)
     check("state.json 未変更", open(state, encoding="utf-8").read() == before)
+
+    # 本物の空き通知と見分けられないと困るので、文面を固定する
+    check("タイトルに【テスト】が付く", sent[0]["title"].startswith("【テスト】"))
+    check("テストである旨を明記", "これは通知テストです" in msg)
+    check("『空きが出ました』とは書かない", "空きが出ました" not in msg)
+    check("『継続中』とも書かない", "継続中" not in msg)
+    check("実際の判定結果（空きなし）を載せる", "・F1  空きなし" in msg)
+
+    # 空きがある状態でテストしても、空き通知の文面にはならない
+    code, sent = run("f2f3_available.html", state, "--test-notify")
+    msg = sent[0]["message"]
+    check("空きありでも『空きが出ました』と書かない", "空きが出ました" not in msg)
+    check("F2 は空きありと表示", "・F2  空きあり" in msg)
+    check("F1 は空きなしと表示", "・F1  空きなし" in msg)
 
     print("\n== 14. --file 単体では state を更新しない（既定動作） ==")
     s4 = os.path.join(tmp, "nofile.json")
