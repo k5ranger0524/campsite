@@ -73,6 +73,9 @@ def check_target(target, args, store, now):
             extra.append(f"列={info['column']}")
         if info.get("icon"):
             extra.append(f"icon={info['icon']}")
+        # サイトが返した生の値。判定が正しいかを後からログだけで検証できるようにする
+        if "raw" in info:
+            extra.append(f"raw={info['raw']!r}")
         detail = f" ({', '.join(extra)})" if extra else ""
         log(f"  {key}  {st.label(info['status']):8s}{detail}  {info.get('name') or ''}")
 
