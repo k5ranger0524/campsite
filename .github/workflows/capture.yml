@@ -22,6 +22,10 @@ on:
         description: '（任意）✓のとき、この要素が出るまで待つ  例: table.calendar'
         type: string
         default: ''
+      click:
+        description: '（任意）取得前にクリックする要素。カンマ区切りで複数可  例: #tab-general'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -50,11 +54,19 @@ jobs:
           NAME: ${{ inputs.name }}
           RENDER: ${{ inputs.render }}
           WAIT: ${{ inputs.wait_selector }}
+          CLICK: ${{ inputs.click }}
         run: |
           args=(--url "$URL" --name "$NAME")
           if [ "$RENDER" = "true" ]; then
             args+=(--render)
             [ -n "$WAIT" ] && args+=(--wait-selector "$WAIT")
+            if [ -n "$CLICK" ]; then
+              IFS=',' read -ra sels <<< "$CLICK"
+              for sel in "${sels[@]}"; do
+                trimmed="$(echo "$sel" | sed 's/^ *//; s/ *$//')"
+                [ -n "$trimmed" ] && args+=(--click "$trimmed")
+              done
+            fi
           fi
           python3 capture.py "${args[@]}"
 
