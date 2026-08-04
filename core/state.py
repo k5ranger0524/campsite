@@ -53,6 +53,10 @@ class StateStore:
 
         notified_at は「空きあり中の最終通知時刻」。
         空きあり以外に戻った対象は None にして通知履歴をリセットする。
+
+        中身が前回と同じなら書き込まない（更新時刻だけが変わるのを避ける）。
+        短い間隔で回すとき、変化が無いのに毎回コミットが増えるのを防ぐため。
+        戻り値は実際に書き込んだかどうか。
         """
         previous = self.items_for(target_id)
         out = {}
@@ -69,6 +73,9 @@ class StateStore:
                 "notified_at": notified_at,
             }
 
+        if previous == out and target_id in self.data["targets"]:
+            return False
+
         self.data["targets"][target_id] = {
             "updated_at": now.isoformat(),
             "date": date_str,
@@ -76,6 +83,7 @@ class StateStore:
         }
         self.data["updated_at"] = now.isoformat()
         self._write()
+        return True
 
     def _write(self):
         tmp = self.path + ".tmp"

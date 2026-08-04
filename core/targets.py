@@ -17,6 +17,10 @@ class Target:
         self.enabled = raw.get("enabled", True)
         self.config = raw.get("config") or {}
 
+        # 確認頻度のグループ。どの間隔で回すかはワークフロー側が --group で選ぶ。
+        # 対象を増やすときにワークフローを触らなくて済むよう、頻度もここで指定する。
+        self.group = str(raw.get("group") or defaults.get("group") or "normal")
+
         # 日付を持たない対象（例: 駐車場の今の満空）もあるので任意
         date = raw.get("date")
         self.date = str(date) if date is not None else None

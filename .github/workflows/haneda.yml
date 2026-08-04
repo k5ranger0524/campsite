@@ -1,0 +1,63 @@
+name: monitor-fast (10分ごと)
+
+# targets.yml で group: fast を指定した対象を確認する。
+# 空きが数分〜十数分で消える対象（羽田の駐車場など）向け。
+#
+# 状態ファイルは monitor-normal とは別にしてある。
+# 10分ごとと30分ごとが同じファイルを押し合うと、コミットが衝突するため。
+
+on:
+  schedule:
+    # 10分ごと (UTC)。GitHubのスケジュールは best-effort なので、
+    # 混雑時はこの間隔どおりに動かないことがある
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_notify:
+        description: '通知テスト（空き状況に関わらず通知を1回送る）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor-fast
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r requirements.txt
+
+      - name: 空き状況をチェック
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          # 入力を直接シェルに展開しない（インジェクション対策）
+          TEST_NOTIFY: ${{ inputs.test_notify }}
+        run: |
+          if [ "$TEST_NOTIFY" = "true" ]; then
+            python3 monitor.py --group fast --state state-fast.json --test-notify
+          else
+            python3 monitor.py --group fast --state state-fast.json
+          fi
+
+      - name: state を保存
+        # monitor.py は中身が変わったときしか state を書かないので、
+        # 変化が無い回はコミットされない（10分ごとでも履歴が膨らまない）。
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain state-fast.json)" ]; then
+            git config user.name  github-actions
+            git config user.email github-actions@github.com
+            git add state-fast.json
+            git commit -m "update state (fast)"
+            git push || (git pull --rebase && git push)
+          fi

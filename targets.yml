@@ -8,6 +8,13 @@
 
 defaults:
   repeat_hours: 2        # 空きが続く間、何時間ごとに再通知するか
+  group: normal          # 確認頻度のグループ（下記）
+
+# group で確認頻度を選ぶ。ワークフローが --group で拾うので、
+# 対象を増やすときにワークフロー側を触る必要はない。
+#   normal … 30分ごと (.github/workflows/akagi.yml)
+#   fast   … 10分ごと (.github/workflows/haneda.yml)
+#            空きが数分で消える対象向け
 
 targets:
   - id: akagi-family
@@ -15,6 +22,7 @@ targets:
     adapter: ban489
     date: 2026-09-19
     enabled: true
+    group: normal
     config:
       facility: autocamp-akagi
       items:
@@ -37,6 +45,8 @@ targets:
     name: 羽田空港 第2・第3駐車場
     adapter: haneda_parking
     enabled: true
+    # 空きが十数分で消えるため短い間隔で確認する
+    group: fast
     config:
       areas:
         P2: { id: 0, name: 第2駐車場(P2/第1ターミナル) }

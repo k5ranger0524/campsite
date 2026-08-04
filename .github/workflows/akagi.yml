@@ -1,4 +1,4 @@
-name: akagi-monitor
+name: monitor-normal (30分ごと)
 
 on:
   schedule:
@@ -14,9 +14,9 @@ on:
 permissions:
   contents: write
 
-# state.json を押し合わないよう、同時に1つしか走らせない
+# state を押し合わないよう、同時に1つしか走らせない
 concurrency:
-  group: akagi-monitor
+  group: monitor-normal
   cancel-in-progress: false
 
 jobs:
@@ -38,9 +38,9 @@ jobs:
           TEST_NOTIFY: ${{ inputs.test_notify }}
         run: |
           if [ "$TEST_NOTIFY" = "true" ]; then
-            python3 monitor.py --test-notify
+            python3 monitor.py --group normal --state state.json --test-notify
           else
-            python3 monitor.py
+            python3 monitor.py --group normal --state state.json
           fi
 
       - name: state.json を保存

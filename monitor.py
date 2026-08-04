@@ -112,8 +112,10 @@ def check_target(target, args, store, now):
     if args.file and not args.write_state_from_file:
         log("  --file モードのため state は更新しません（--write-state-from-file で上書き可）")
     else:
-        store.update(target.id, items, new_keys + cont_keys, now, target.date)
-        log(f"  状態を保存しました: {args.state}")
+        if store.update(target.id, items, new_keys + cont_keys, now, target.date):
+            log(f"  状態を保存しました: {args.state}")
+        else:
+            log("  前回から変化なし（state は書き換えません）")
 
 
 def run(args):
@@ -123,8 +125,13 @@ def run(args):
         for t in targets:
             mark = " " if t.enabled else "×"
             date = t.date or "(日付なし)"
-            print(f"{mark} {t.id:<20} {t.adapter:<10} {date:<12} {t.name}")
+            print(f"{mark} {t.id:<16} {t.group:<8} {t.adapter:<16} {date:<12} {t.name}")
         return 0
+
+    if args.group:
+        targets = [t for t in targets if t.group == args.group]
+        if not targets:
+            raise MonitorError(f"group={args.group!r} の対象がありません")
 
     if args.target:
         targets = [t for t in targets if t.id == args.target]
@@ -173,6 +180,7 @@ def main():
     ap = argparse.ArgumentParser(description="空き状況の監視")
     ap.add_argument("--targets", default="targets.yml", help="監視対象ファイル")
     ap.add_argument("--target", help="この id の対象だけを確認する")
+    ap.add_argument("--group", help="この group の対象だけを確認する（確認頻度の切り分け用）")
     ap.add_argument("--list", action="store_true", help="対象の一覧を表示して終了")
     ap.add_argument("--state", default="state.json", help="状態ファイル")
     ap.add_argument("--file", help="実サイトの代わりにローカルHTMLを読む（テスト用）")

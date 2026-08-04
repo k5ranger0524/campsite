@@ -123,6 +123,7 @@ python3 monitor.py --test-notify            # 通知を強制発火して疎通�
 |---|---|
 | `--targets PATH` | 監視対象ファイル（既定 `targets.yml`） |
 | `--target ID` | この id の対象だけ確認する |
+| `--group NAME` | この group の対象だけ確認する（確認頻度の切り分け） |
 | `--list` | 対象の一覧を表示して終了 |
 | `--state PATH` | 状態ファイル（既定 `state.json`） |
 | `--file PATH` | 実サイトの代わりにローカルHTMLを読む。既定では state を更新しない |
@@ -138,6 +139,7 @@ python3 monitor.py --test-notify            # 通知を強制発火して疎通�
 | `adapter` | `adapters/` のモジュール名 |
 | `date` | 監視対象日。日付の概念がない対象（駐車場など）は省略可 |
 | `enabled` | `false` にすると一括実行から外れる |
+| `group` | 確認頻度のグループ。`normal`(30分) / `fast`(10分)。既定は `normal` |
 | `repeat_hours` | 空きが続く間の再通知間隔（既定は `defaults.repeat_hours`、2時間） |
 | `config` | アダプタに渡す設定 |
 
@@ -286,7 +288,7 @@ python3 tests/test_monitor.py
 ```
 
 パース・日付列の解決・通知判定・再通知間隔・状態遷移・複数対象のエラー分離・
-設定の検証・羽田駐車場アダプタを 99 項目で検証する。ntfy送信とHTTP取得は差し替えるので通信は行わない。
+設定の検証・羽田駐車場アダプタ・確認頻度グループを 109 項目で検証する。ntfy送信とHTTP取得は差し替えるので通信は行わない。
 
 `tests/fixtures/` は `tests/make_fixture.py` が生成する合成データだが、
 ban489 のヘッダ表記（先頭列だけ月付き）は実サイトの `debug.html` に合わせてある。
@@ -299,8 +301,22 @@ python3 monitor.py --target akagi-family --file debug.html   # 全区画「空�
 
 ## GitHub Actions での定期実行
 
-ワークフローは [`.github/workflows/akagi.yml`](.github/workflows/akagi.yml) に用意済み。
-30分ごとに `targets.yml` の全対象を確認し、`state.json` をコミットして実行間で引き継ぐ。
+確認頻度ごとにワークフローを分けてある。どちらで回すかは `targets.yml` の `group` で決まるので、
+**対象を増やすときにワークフローを触る必要はない。**
+
+| ワークフロー | 間隔 | group | 状態ファイル |
+|---|---|---|---|
+| [`akagi.yml`](.github/workflows/akagi.yml) | 30分 | `normal` | `state.json` |
+| [`haneda.yml`](.github/workflows/haneda.yml) | 10分 | `fast` | `state-fast.json` |
+
+`fast` は空きが数分で消える対象向け。羽田の駐車場は実測で
+**16:48に混雑だった枠が17:02には満車**になっていたため、30分間隔では取り逃す。
+
+状態ファイルを分けているのは、10分ごとと30分ごとが同じファイルを
+押し合ってコミットが衝突するのを避けるため。
+
+なお `monitor.py` は**中身が変わったときしか state を書かない**ので、
+10分ごとに回しても変化が無い限りコミットは増えない。
 
 ### 設定手順（ブラウザだけで完結）
 

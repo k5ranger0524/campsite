@@ -443,6 +443,63 @@ targets:
         except Exception as exc:
             check("範囲外の日付は失敗する", "含まれていません" in str(exc))
 
+    # ------------------------------------------------------------------
+    print("\n== 19. group で確認頻度を分けられる ==")
+    grouped = write_targets(os.path.join(tmp, "grp.yml"), """
+defaults:
+  group: normal
+targets:
+  - id: slow
+    name: ゆっくり確認する対象
+    adapter: ban489
+    date: 2026-09-19
+    config:
+      facility: slow-camp
+      items: {F1: room_24246}
+  - id: quick
+    name: 頻繁に確認する対象
+    adapter: ban489
+    date: 2026-09-19
+    group: fast
+    config:
+      facility: quick-camp
+      items: {F1: room_24246}
+""")
+    ROUTES.clear()
+    ROUTES["slow-camp"] = "all_full.html"
+    ROUTES["quick-camp"] = "all_full.html"
+
+    s8 = os.path.join(tmp, "g-normal.json")
+    code, _ = run(grouped, s8, "--group", "normal")
+    eq("exit 0", code, 0)
+    check("normal だけが対象", list(read_state(s8)["targets"]) == ["slow"])
+
+    s9 = os.path.join(tmp, "g-fast.json")
+    code, _ = run(grouped, s9, "--group", "fast")
+    eq("exit 0", code, 0)
+    check("fast だけが対象", list(read_state(s9)["targets"]) == ["quick"])
+
+    code, _ = run(grouped, os.path.join(tmp, "g-none.json"), "--group", "nonexistent")
+    eq("存在しないgroupは exit 1", code, 1)
+
+    print("\n== 20. 変化が無ければ state を書き換えない（短い間隔でも履歴が膨らまない） ==")
+    s10 = os.path.join(tmp, "nochange.json")
+    ROUTES.clear(); ROUTES["autocamp-akagi"] = "all_full.html"
+    code, _ = run(akagi, s10)
+    first = open(s10, encoding="utf-8").read()
+    check("1回目で作られる", os.path.exists(s10))
+
+    code, _ = run(akagi, s10)
+    eq("2回目も exit 0", code, 0)
+    check("中身が1バイトも変わらない（更新時刻も進まない）",
+          open(s10, encoding="utf-8").read() == first)
+
+    # 状態が変われば当然書き換わる
+    ROUTES["autocamp-akagi"] = "f2f3_available.html"
+    code, sent = run(akagi, s10)
+    eq("空きが出たら通知", len(sent), 1)
+    check("state は書き換わる", open(s10, encoding="utf-8").read() != first)
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")
