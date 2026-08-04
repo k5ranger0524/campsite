@@ -27,6 +27,7 @@ core/             取得・状態管理・通知・設定読み込み
 adapters/
   ban489.py       489ban.net（予約番）系
   css.py          CSSセレクタで読む汎用アダプタ
+  haneda_parking.py  羽田空港 第2・第3駐車場（JSON APIを直接叩く）
   _template.py    新しいシステムに対応するときの雛形
 ```
 
@@ -285,7 +286,7 @@ python3 tests/test_monitor.py
 ```
 
 パース・日付列の解決・通知判定・再通知間隔・状態遷移・複数対象のエラー分離・
-設定の検証を 88 項目で検証する。ntfy送信とHTTP取得は差し替えるので通信は行わない。
+設定の検証・羽田駐車場アダプタを 99 項目で検証する。ntfy送信とHTTP取得は差し替えるので通信は行わない。
 
 `tests/fixtures/` は `tests/make_fixture.py` が生成する合成データだが、
 ban489 のヘッダ表記（先頭列だけ月付き）は実サイトの `debug.html` に合わせてある。

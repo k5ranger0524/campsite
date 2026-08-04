@@ -394,6 +394,55 @@ targets:
     eq("駐車場4つが見つかる", len(found), 4)
     check("IDが取れる", found[0]["key"] == "lot-1")
 
+    # ------------------------------------------------------------------
+    print("\n== 18. 羽田駐車場アダプタ（実際に取得したAPIデータで検証） ==")
+    cap = os.path.join(ROOT, "captures", "haneda-render.api.json")
+    if not os.path.exists(cap):
+        check("キャプチャが無いのでスキップ", True)
+    else:
+        hnd = adapters.get("haneda_parking")
+        cfg = {
+            "areas": {"P2": {"id": 0, "name": "第2駐車場"},
+                      "P3": {"id": 1, "name": "第3駐車場"}},
+            "dates": ["2026-08-22", "2026-08-23", "2026-08-24", "2026-08-25"],
+            "handicapped": 0,
+        }
+        with open(cap, encoding="utf-8") as f:
+            raw = f.read()
+
+        items = hnd.parse(raw, cfg, None)
+        eq("2駐車場 × 4日 = 8件", len(items), 8)
+        # 取得時点の実際の値: P2 8/23 だけ konzatsu、他は full
+        eq("P2 8/23 は混雑 → 空きあり", items["P2 8/23"]["status"], "available")
+        eq("P2 8/22 は満車", items["P2 8/22"]["status"], "full")
+        eq("P3 8/23 は満車", items["P3 8/23"]["status"], "full")
+        avail = [k for k, v in items.items() if v["status"] == "available"]
+        eq("空きありは1件だけ", avail, ["P2 8/23"])
+        check("表示名に日付が入る", items["P2 8/23"]["name"].endswith("8/23"))
+
+        # 混雑を通知対象から外す設定
+        items2 = hnd.parse(raw, dict(cfg, status_map={"konzatsu": "full"}), None)
+        eq("混雑を除外すると空きなしになる", items2["P2 8/23"]["status"], "full")
+
+        # 期間外（受付開始前）は closed
+        far = hnd.parse(raw, dict(cfg, dates=["2026-09-04"]), None)
+        eq("期間外は closed", far["P2 9/4"]["status"], "closed")
+
+        # 未知のstatus（＝空車の可能性）は空きあり扱いにし、警告を出す
+        warned = []
+        # api.json は body がJSON文字列として入れ子になっているので素朴に置換する
+        spoofed = raw.replace("konzatsu", "vacant")
+        items3 = hnd.parse(spoofed, cfg, None, warn=warned.append)
+        eq("未知のstatusは空きあり扱い", items3["P2 8/23"]["status"], "available")
+        check("警告を出す", any("vacant" in w for w in warned))
+
+        # カレンダーに無い日を指定したら失敗させる（黙って見逃さない）
+        try:
+            hnd.parse(raw, dict(cfg, dates=["2027-01-01"]), None)
+            check("範囲外の日付は失敗する", False)
+        except Exception as exc:
+            check("範囲外の日付は失敗する", "含まれていません" in str(exc))
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")

@@ -32,3 +32,17 @@ targets:
   #     facility: example-slug
   #     items:
   #       A1: room_12345
+
+  - id: haneda-parking
+    name: 羽田空港 第2・第3駐車場
+    adapter: haneda_parking
+    enabled: true
+    config:
+      areas:
+        P2: { id: 0, name: 第2駐車場(P2/第1ターミナル) }
+        P3: { id: 1, name: 第3駐車場(P3/第2ターミナル) }
+      dates: [2026-08-22, 2026-08-23, 2026-08-24, 2026-08-25]
+      handicapped: 0
+      # 混雑も「空きあり」として通知する
+      status_map:
+        konzatsu: available
