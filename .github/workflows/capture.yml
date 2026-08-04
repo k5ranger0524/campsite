@@ -1,0 +1,82 @@
+name: capture-html
+
+# 監視したいページのHTMLを取得してリポジトリに保存する。
+# 新しい対象に対応するとき、まずこれを実行してHTMLを手に入れる。
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: '取得するページのURL'
+        required: true
+        type: string
+      name:
+        description: '保存名（captures/<name>.html になる）'
+        required: true
+        type: string
+      render:
+        description: 'JavaScriptで描画されているページの場合は ✓'
+        type: boolean
+        default: false
+      wait_selector:
+        description: '（任意）✓のとき、この要素が出るまで待つ  例: table.calendar'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r requirements.txt
+
+      - name: Playwright を用意（--render のときだけ）
+        if: ${{ inputs.render }}
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: ページを取得
+        env:
+          URL: ${{ inputs.url }}
+          NAME: ${{ inputs.name }}
+          RENDER: ${{ inputs.render }}
+          WAIT: ${{ inputs.wait_selector }}
+        run: |
+          args=(--url "$URL" --name "$NAME")
+          if [ "$RENDER" = "true" ]; then
+            args+=(--render)
+            [ -n "$WAIT" ] && args+=(--wait-selector "$WAIT")
+          fi
+          python3 capture.py "${args[@]}"
+
+      - name: 保存したHTMLをコミット
+        env:
+          NAME: ${{ inputs.name }}
+        run: |
+          if [ -n "$(git status --porcelain captures/)" ]; then
+            git config user.name  github-actions
+            git config user.email github-actions@github.com
+            git add captures/
+            git commit -m "capture: $NAME"
+            git push || (git pull --rebase && git push)
+            echo "captures/$NAME.html をコミットしました"
+          else
+            echo "変更なし（同じ内容でした）"
+          fi
+
+      - name: 取得したHTMLを成果物としても残す
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capture-${{ inputs.name }}
+          path: captures/
+          if-no-files-found: warn
