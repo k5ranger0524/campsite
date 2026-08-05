@@ -1,0 +1,728 @@
+<!DOCTYPE html><html lang="jp"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>TOP｜羽田空港P4駐車場予約サービス｜日本空港ビルデング株式会社</title>
+    <link href="/airport/css/dialog.css" rel="stylesheet" type="text/css">
+    <link href="/airport/css/index.css" rel="stylesheet" type="text/css">
+    <link href="/airport/css/jquery-ui-1.12.1.min.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="/airport/js/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="/airport/js/jquery-ui-1.12.1.min.js"></script>
+    <script type="text/javascript" src="/airport/js/rollover.js"></script>
+    <script type="text/javascript" src="/airport/js/dialog.js"></script>
+
+    <script type="text/javascript">
+
+        window.onload = function(){
+            if (document.getElementById('wash_status_success') != null) {
+                var doc = document.getElementById('wash_status_success');
+                if (doc.innerHTML === 'true') {
+                    reservedCarWash();
+                }
+            }
+        }
+
+        var scrollto = null
+        if (scrollto === 'fee') {
+            window.onload = function() {
+                var element = document.getElementById('sub_titleber_price');
+                var rect = element.getBoundingClientRect();
+                var y = rect.top - 10;
+                window.scrollTo(0, y);
+            }
+        }
+
+        function reservedCarWash() {
+            var buttons = [
+                {
+                    text: 'OK',
+                    click: function () { $(this).dialog('close'); }
+                }
+            ];
+            // ダイアログを表示
+            showDialog('', '洗車・コーティングサービスより<br />ご案内メールを送信しました。', buttons);
+            return false;
+        }
+
+    </script>
+    <style>
+        <!--
+        .box {
+            float: left;
+        }
+        .boxContainer {
+            overflow: hidden;
+            padding-left: 130px;
+        }
+        /* clearfix */
+        .boxContainer:before,
+        .boxContainer:after {
+            content: "";
+            display: table;
+        }
+        .boxContainer:after {
+            clear: both;
+        }
+        .box span {
+            font-size: 130%;
+        }
+        .box table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        .box table tr th,
+        .box table tr td {
+            border: solid 1px;
+            padding: 0;
+            margin: 0;
+            width: 100px;
+            height: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 100%;
+        }
+        .betweenTables {
+            padding-top: 60px;
+            padding-left: 20px;
+            padding-right: 20px;
+            font-weight: bold;
+            font-size: 300%;
+        }
+
+        .cancel_policy span {
+            font-size: 130%;
+        }
+        .cancel_policy div {
+            padding-left: 88px;
+        }
+        .cancel_policy div table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        .cancel_policy div table tr th,
+        .cancel_policy div table tr td {
+            border: solid 1px;
+            padding: 0;
+            margin: 0;
+            width: 140px;
+            height: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 100%;
+        }
+
+        .deposit_notice table tr th {
+            border: 0;
+            background-color:transparent;
+            padding: 0;
+            padding-bottom: 5px;
+            margin: 0;
+            vertical-align: top;
+            width: 40px;
+            font-weight: normal;
+            font-size: 80%;
+        }
+        .deposit_notice table tr td {
+            border: 0;
+            background-color:transparent;
+            padding: 0;
+            padding-bottom: 5px;
+            margin: 0;
+            vertical-align: top;
+            font-weight: normal;
+            font-size: 80%;
+        }
+        .deposit_notice table tr th span,
+        .deposit_notice table tr td span {
+            line-height: 1.5;
+            display:block;
+        }
+
+        .price {
+            text-align: center;
+        }
+        .price span {
+            font-size: 130%;
+        }
+        .price div {
+            padding-left: 65px;
+        }
+        .price div table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        .price div table tr th,
+        .price div table tr td {
+            border: solid 1px;
+            padding: 0;
+            margin: 0;
+            width: 300px;
+            height: 25px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 100%;
+        }
+
+        -->
+    </style>
+</head>
+<body>
+
+    <div id="page">
+        
+<div id="headerarea">
+	<div id="hdr_top">
+		<h1>インターネットで羽田空港のP4駐車場を簡単予約!!</h1>
+	</div>
+	<div id="mainphoto_top">
+		<div id="mainphoto_topleft"><img src="/airport/images/common_img/mainphoto_topleft_02.jpg" alt="羽田空港ターミナル　BIGBIRD" width="180" height="81"> </div>
+		<div id="mainphoto_topright"> <img src="/airport/images/common_img/mainphoto_topright.jpg" alt="P4駐車場予約サービス" width="600" height="81"> </div>
+	</div>
+	<div id="mainnavi_bg">
+
+		<!-- ヘッダーメニュー -->
+		<ul id="mainnaviarea">
+
+			<!-- HOME -->
+			<li>
+				
+				<a href="/airport/">
+					<img alt="TOP" src="/airport/images/navi_img/navi_home_g.gif" width="126" height="60" class="imgover">
+				</a>
+			</li>
+
+			<!-- 予約 -->
+			<li>
+				<img alt="予約は、ログイン後にご利用になれます" src="/airport/images/navi_img/navi_yoyaku.gif" width="126" height="60" class="imgover">
+				
+				
+			</li>
+
+			<!-- 予約確認・変更 -->
+			<li>
+				<img alt="駐車場の予約確認・変更は、ログイン後にご利用になれます" src="/airport/images/navi_img/navi_yoyakukani.gif" width="126" height="60" class="imgover">
+				
+				
+			</li>
+
+			<!-- 予約キャンセル -->
+			<li>
+				<img alt="駐車場のキャンセルは、ログイン後にご利用になれます" src="/airport/images/navi_img/navi_yoyakucan.gif" width="126" height="60" class="imgover">
+				
+				
+			</li>
+
+			<!-- 予約履歴 -->
+			<li>
+				<img alt="予約履歴は、ログイン後にご利用になれます" src="/airport/images/navi_img/navi_rireki.gif" width="126" height="60" class="imgover">
+				
+				
+			</li>
+
+			<!-- 駐車料金 -->
+			<li>
+				</li><li>
+					<a href="/airport/public/fee">
+						<img alt="TOP" src="/airport/images/navi_img/navi_ryoukin.gif" width="126" height="60" class="imgover">
+					</a>
+				</li>
+			
+
+		</ul>
+	</div>
+
+	<!-- 言語切り替え・ログイン会員情報 -->
+	<div id="mainphoto_bottom">
+		<a href="/airport/public/switch_lang?to=en" onclick="return confirm('英語サイトに切り替えます。\nSwitch to English site.')" style="all: revert; font-size: 14pt; vertical-align: middle; float: left; margin-left: 10px;">
+			<span style="background-color:#ffffff">English</span>
+		</a>
+		<input size="50" type="text" value="ようこそゲスト様　ログインしてください">
+		
+	</div>
+</div>
+
+<div id="contentarea">
+	<div id="loginarea">
+
+		<div id="loginphoto_left">
+
+			<!-- サイドメニュー -->
+			<ul>
+
+				<!-- ログイン・ログアウト -->
+				<li>
+					<a href="/airport/authentication/login"><img src="/airport/images/common_img/memlogin_btn.gif" alt="ログイン" width="168" height="84" class="imgover"></a>
+					
+				</li>
+
+				<!-- 初めてご利用の方 -->
+				<li>
+					<a href="/airport/public/first"><img src="/airport/images/common_img/memfirst_btn.gif" alt="初めてご利用の方" width="168" height="48" class="imgover"></a>
+				</li>
+
+				<!-- 会員登録 -->
+				<li>
+					<a href="/airport/public/signup/terms"><img src="/airport/images/common_img/memregis_btn.gif" alt="会員登録" width="168" height="64" class="imgover"></a>
+				</li>
+
+			</ul>
+		</div>
+
+		<div id="loginphoto_right">
+			<img src="/airport/images/common_img/loginphoto_right.jpg" width="570" height="160" alt="P4外観">
+			<table id="menu_under_loginphoto">
+				<tbody><tr>
+					<td>
+						<img src="/airport/images/navi_img/navi_mem.gif" alt="会員情報の変更は、ログイン後にご利用になれます" width="211" height="39" class="imgover">
+						
+					</td>
+					<td>
+						<a data-url="/airport/public/qa" target="window_name" onclick="disp(this.getAttribute('data-url'))">
+							<img src="/airport/images/common_img/mamque_btn.gif" alt="Q &amp; A" width="120px;" height="39px;" class="imgover">
+						</a>
+					</td>
+					<td>
+						<a data-url="/airport/public/inquiry" target="window_name" onclick="disp(this.getAttribute('data-url'))">
+							<img src="/airport/images/common_img/memtel_btn.gif" alt="お問い合わせ" width="120px;" height="39px;" class="imgover">
+						</a>
+					</td>
+					<td>
+						<a href="/airport/images/pdf/parkingmap00.pdf" target="_blank">
+							<img src="/airport/images/navi_img/navi_park.gif" alt="駐車場地図" width="120px;" height="39px;" class="imgover">
+						</a>
+					</td>
+				</tr>
+			</tbody></table>
+		</div>
+
+	</div>
+</div>
+
+        <div id="contentarea">
+
+            <div style="margin: 10px; margin-top: 10px; margin-bottom:5px; background: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #fee), color-stop(1.00, #dbb)); background: -webkit-linear-gradient(#fee, #dbb); background: -moz-linear-gradient(#fee, #dbb); background: -o-linear-gradient(#fee, #dbb); background: -ms-linear-gradient(#fee, #dbb); background: linear-gradient(#fee, #dbb); border-radius:10px; -webkit-border-radius:10px; -moz-border-radius:10px; box-shadow:0px 5px 3px #888; -moz-box-shadow:0px 5px 3px #888; -webkit-box-shadow:0px 5px 3px #888;">
+                <div style="border: 1px; padding-top: 15px; padding-bottom: 10px; text-align: center;">
+                    <span style="font-weight: bold; font-size: 140%; color: #444;">P1駐車場及びP4駐車場の駐車料金改定のお知らせ</span>
+                </div>
+                <div style="padding-bottom: 20px; text-align: left; color: #000;">
+                    <p style="font-weight: normal;">
+                        　　　2025年8月1日（金）より、P1駐車場及びP4駐車場の駐車料金を改定いたしました。 <br>
+                        　　　何卒ご理解賜りますようお願い申し上げます。<br>
+                        　　　新料金の詳細については、以下のリンクをご確認ください。<br>
+                        　　　<a href="https://tokyo-haneda.com/information/2025/detail_00022.html" target="_blank">【新料金表はこちら】</a><br>
+                    </p><br>
+                    <p style="font-weight: normal;">
+                        　　　駐車場は大変混雑いたします。<br>
+                        　　　<a href="https://tokyo-haneda.com/access/index.html" target="_blank">電車、バス、タクシー等</a>の交通機関のご利用も合わせてご検討をお願いします。<br>
+                    </p>
+                </div>
+            </div>
+            <!--
+            <div style="margin: 10px; margin-top: 10px; margin-bottom:10px; background: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #eee), color-stop(1.00, #ccc)); background: -webkit-linear-gradient(#eee, #ccc); background: -moz-linear-gradient(#eee, #ccc); background: -o-linear-gradient(#eee, #ccc); background: -ms-linear-gradient(#eee, #ccc); background: linear-gradient(#eee, #ccc); border-radius:10px; -webkit-border-radius:10px; -moz-border-radius:10px; box-shadow:0px 5px 3px #888; -moz-box-shadow:0px 5px 3px #888; -webkit-box-shadow:0px 5px 3px #888;">
+                <div style="border: 1px; padding-top: 15px; padding-bottom: 10px; text-align: center;">
+                    <span style="font-weight: bold; font-size: 150%; color: #900;">ご利用について</span>
+                </div>
+                <div style="padding-bottom: 15px; text-align: center; color: #900;">
+                    <div style="font-size: 130%;">
+                        羽田空港第4駐車場予約ウェブサイトは、PC環境でご利用いただくことを推奨しています。<br />
+                        スマートホン、タブレット、フィーチャーホン(ガラケー)でご利用いただいた場合には、<br />
+                        正しくご利用できない場合がございます。ご了承ください。
+                    </div>
+                </div>
+            </div>
+            -->
+
+            <div style="margin: 10px; margin-top: 10px; margin-bottom:10px; background: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #DFE), color-stop(1.00, #CDFFCB)); background: -webkit-linear-gradient(#DFE, #CDFFCB); background: -moz-linear-gradient(#DFE, #CDFFCB); background: -o-linear-gradient(#DFE, #CDFFCB); background: -ms-linear-gradient(#DFE, #CDFFCB); background: linear-gradient(#DFE, #CDFFCB); border-radius:10px; -webkit-border-radius:10px; -moz-border-radius:10px; box-shadow:0px 5px 3px #888; -moz-box-shadow:0px 5px 3px #888; -webkit-box-shadow:0px 5px 3px #888;">
+                <div style="border: 1px; padding-top: 15px; padding-bottom: 10px; text-align: center;">
+                    <span style="font-weight: bold; font-size: 150%; color: #444;">多客期料金について</span>
+                </div>
+                <div style="padding-bottom: 15px; text-align: center; color: #444;">
+                    <div style="font-size: 120%; margin-bottom: 20px;">
+                        <span style="font-weight: bold;">令和8年度 多客期料金対象期間は以下の通りです。</span><br>
+                        Ｇ　　Ｗ：令和8年 4月24日(金)～ 5月 6日(水)<br>
+                        夏　　季：令和8年 7月10日(金)～ 8月30日(日)<br>
+                        年末年始：令和8年12月18日(金)～令和9年 1月 3日(日)
+                    </div>
+                    <div style="font-size: 110%; margin-bottom: 10px;">
+                        ※詳細は、「<a href="https://tokyo-haneda.com/access/parking/index.html#nav02" target="_blank">駐車料金表</a>」をご覧ください。
+                    </div>
+                </div>
+            </div>
+
+            <div id="sub_titleber">
+                <h2 class="float_left_m0">現在の予約状況</h2>
+                <p class="context">
+                    <span>2026年8月5日 10：10　現在の空車状況は下のカレンダーの通りです。</span>
+                </p>
+            </div>
+
+            <!-- カレンダーBEGIN -->
+            <div id="calendar_area">
+                <div id="calendar01" class="clearfix"><div>
+<!-- ナビ -->
+<table class="calendar_btm">
+	<tbody><tr>
+		<td colspan="3">
+			<img src="/airport/images/cal_img/public_month.gif" alt="" width="228" height="45">
+		</td>
+	</tr>
+	<tr>
+		<td class="publ_cal">
+			<div style="display: block; width: 100%; cursor: pointer;" onclick="document.forms['p2prev'].submit();">
+				<form action="/airport/" method="post" id="p2prev"><input type="hidden" name="_csrf" value="OC4L1_rSVT5cuwS3SZHm7N5fENkqxgzFlOMPEqNt5vCrBrSjDE84tp_qbA9xiWKHe7zS3uY7PeEY9j_opIY7cMFVhZadMoOW">
+					<input type="hidden" name="direction" value="p2prev">
+					<span style="font-size: 16px;">前月</span>
+				</form>
+			</div>
+		</td>
+		<td class="publ" style="width: 45px;">
+			<span>8月</span>
+		</td>
+		<td class="publ_cal">
+			<div style="display: block; width: 100%; cursor: pointer;" onclick="document.forms['p2next'].submit();">
+				<form action="/airport/" method="post" id="p2next"><input type="hidden" name="_csrf" value="OC4L1_rSVT5cuwS3SZHm7N5fENkqxgzFlOMPEqNt5vCrBrSjDE84tp_qbA9xiWKHe7zS3uY7PeEY9j_opIY7cMFVhZadMoOW">
+					<input type="hidden" name="direction" value="p2next">
+					<span style="font-size: 16px;">翌月</span>
+				</form>
+			</div>
+		</td>
+	</tr>
+</tbody></table>
+
+<table class="calendar_waku">
+<!-- 曜日 -->
+	<tbody><tr class="day">
+		<td class="week"><span class="red">日</span></td>
+		<td class="week">月</td>
+		<td class="week">火</td>
+		<td class="week">水</td>
+		<td class="week">木</td>
+		<td class="week">金</td>
+		<td class="week"><span class="blue">土</span></td>
+	</tr>
+<!-- 第1週 -->
+	<tr class="day">
+		<td class="red unavailable "><span>26</span></td>
+		<td class="unavailable "><span>27</span></td>
+		<td class="unavailable "><span>28</span></td>
+		<td class="unavailable "><span>29</span></td>
+		<td class="unavailable "><span>30</span></td>
+		<td class="unavailable "><span>31</span></td>
+		<td class="blue unavailable "><span>1</span></td>
+	</tr>
+<!-- 第2週 -->
+	<tr class="day">
+		<td class="red unavailable "><span>2</span></td>
+		<td class="unavailable "><span>3</span></td>
+		<td class="unavailable "><span>4</span></td>
+		<td class="congestion "><span>5</span></td>
+		<td class="full "><span>6</span></td>
+		<td class="full "><span>7</span></td>
+		<td class="blue full "><span>8</span></td>
+	</tr>
+<!-- 第3週 -->
+	<tr class="day">
+		<td class="red full "><span>9</span></td>
+		<td class="full "><span>10</span></td>
+		<td class="full "><span>11</span></td>
+		<td class="full "><span>12</span></td>
+		<td class="full "><span>13</span></td>
+		<td class="full "><span>14</span></td>
+		<td class="blue full "><span>15</span></td>
+	</tr>
+<!-- 第4週 -->
+	<tr class="day">
+		<td class="red full "><span>16</span></td>
+		<td class="full "><span>17</span></td>
+		<td class="full "><span>18</span></td>
+		<td class="full "><span>19</span></td>
+		<td class="full "><span>20</span></td>
+		<td class="full "><span>21</span></td>
+		<td class="blue full "><span>22</span></td>
+	</tr>
+<!-- 第5週 -->
+	<tr class="day">
+		<td class="red full "><span>23</span></td>
+		<td class="full "><span>24</span></td>
+		<td class="full "><span>25</span></td>
+		<td class="full "><span>26</span></td>
+		<td class="full "><span>27</span></td>
+		<td class="full "><span>28</span></td>
+		<td class="blue full "><span>29</span></td>
+	</tr>
+<!-- 第6週 -->
+	<tr class="day">
+		<td class="red full "><span>30</span></td>
+		<td class="full "><span>31</span></td>
+		<td class="full "><span>1</span></td>
+		<td class="full "><span>2</span></td>
+		<td class="full "><span>3</span></td>
+		<td class="full "><span>4</span></td>
+		<td class="blue unavailable "><span>5</span></td>
+	</tr>
+</tbody></table>
+<table class="legend">
+	<tbody><tr>
+		<td><div class="color_legend empty"></div></td><td class="caption_legend">空車</td>
+		<td><div class="color_legend congestion"></div></td><td class="caption_legend">混雑</td>
+	</tr>
+	<tr>
+		<td><div class="color_legend full"></div></td><td class="caption_legend">満車</td>
+		<td><div class="color_legend unavailable"></div></td><td class="caption_legend">予約対象外</td>
+	</tr>
+</tbody></table>
+</div></div>
+                <div id="calendar02" class="clearfix"><div>
+<!-- ナビ -->
+<table class="calendar_btm">
+	<tbody><tr>
+		<td colspan="3">
+			<img src="/airport/images/cal_img/private_month.gif" alt="" width="228" height="45">
+		</td>
+	</tr>
+	<tr>
+		<td class="priv_cal">
+			<div style="display: block; width: 100%; cursor: pointer;" onclick="document.forms['p3prev'].submit();">
+				<form action="/airport/" method="post" id="p3prev"><input type="hidden" name="_csrf" value="OC4L1_rSVT5cuwS3SZHm7N5fENkqxgzFlOMPEqNt5vCrBrSjDE84tp_qbA9xiWKHe7zS3uY7PeEY9j_opIY7cMFVhZadMoOW">
+					<input type="hidden" name="direction" value="p3prev">
+					<span style="font-size: 16px;">前月</span>
+				</form>
+			</div>
+		</td>
+		<td class="priv" style="width: 45px;">
+			<span>8月</span>
+		</td>
+		<td class="priv_cal">
+			<div style="display: block; width: 100%; cursor: pointer;" onclick="document.forms['p3next'].submit();">
+				<form action="/airport/" method="post" id="p3next"><input type="hidden" name="_csrf" value="OC4L1_rSVT5cuwS3SZHm7N5fENkqxgzFlOMPEqNt5vCrBrSjDE84tp_qbA9xiWKHe7zS3uY7PeEY9j_opIY7cMFVhZadMoOW">
+					<input type="hidden" name="direction" value="p3next">
+					<span style="font-size: 16px;">翌月</span>
+				</form>
+			</div>
+		</td>
+	</tr>
+</tbody></table>
+
+<table class="calendar_waku">
+<!-- 曜日 -->
+	<tbody><tr class="day">
+		<td class="week"><span class="red">日</span></td>
+		<td class="week">月</td>
+		<td class="week">火</td>
+		<td class="week">水</td>
+		<td class="week">木</td>
+		<td class="week">金</td>
+		<td class="week"><span class="blue">土</span></td>
+	</tr>
+<!-- 第1週 -->
+	<tr class="day">
+		<td class="red unavailable "><span>26</span></td>
+		<td class="unavailable "><span>27</span></td>
+		<td class="unavailable "><span>28</span></td>
+		<td class="unavailable "><span>29</span></td>
+		<td class="unavailable "><span>30</span></td>
+		<td class="unavailable "><span>31</span></td>
+		<td class="blue unavailable "><span>1</span></td>
+	</tr>
+	<!-- 第2週 -->
+	<tr class="day">
+		<td class="red unavailable "><span>2</span></td>
+		<td class="unavailable "><span>3</span></td>
+		<td class="unavailable "><span>4</span></td>
+		<td class="full "><span>5</span></td>
+		<td class="full "><span>6</span></td>
+		<td class="congestion "><span>7</span></td>
+		<td class="blue full "><span>8</span></td>
+	</tr>
+	<!-- 第3週 -->
+	<tr class="day">
+		<td class="red full "><span>9</span></td>
+		<td class="full "><span>10</span></td>
+		<td class="full "><span>11</span></td>
+		<td class="full "><span>12</span></td>
+		<td class="full "><span>13</span></td>
+		<td class="full "><span>14</span></td>
+		<td class="blue full "><span>15</span></td>
+	</tr>
+	<!-- 第4週 -->
+	<tr class="day">
+		<td class="red full "><span>16</span></td>
+		<td class="full "><span>17</span></td>
+		<td class="full "><span>18</span></td>
+		<td class="full "><span>19</span></td>
+		<td class="full "><span>20</span></td>
+		<td class="full "><span>21</span></td>
+		<td class="blue full "><span>22</span></td>
+	</tr>
+	<!-- 第5週 -->
+	<tr class="day">
+		<td class="red full "><span>23</span></td>
+		<td class="full "><span>24</span></td>
+		<td class="full "><span>25</span></td>
+		<td class="full "><span>26</span></td>
+		<td class="full "><span>27</span></td>
+		<td class="full "><span>28</span></td>
+		<td class="blue congestion "><span>29</span></td>
+	</tr>
+	<!-- 第6週 -->
+	<tr class="day">
+		<td class="red congestion "><span>30</span></td>
+		<td class="congestion "><span>31</span></td>
+		<td class="full "><span>1</span></td>
+		<td class="full "><span>2</span></td>
+		<td class="full "><span>3</span></td>
+		<td class="full "><span>4</span></td>
+		<td class="blue unavailable "><span>5</span></td>
+	</tr>
+</tbody></table>
+<table class="legend">
+	<tbody><tr>
+		<td><div class="color_legend empty"></div></td><td class="caption_legend">空車</td>
+		<td><div class="color_legend congestion"></div></td><td class="caption_legend">混雑</td>
+	</tr>
+	<tr>
+		<td><div class="color_legend full"></div></td><td class="caption_legend">満車</td>
+		<td><div class="color_legend unavailable"></div></td><td class="caption_legend">予約対象外</td>
+	</tr>
+</tbody></table>
+</div></div>
+            </div>
+            <!-- カレンダーEND -->
+
+            <div id="caption"> <img src="/airport/images/index_img/titleber_caption.jpg" alt="インターネットで羽田空港の駐車場を簡単予約!!" width="760" height="66">
+                <div id="caption_content" class="clearfix">
+                    <p>羽田空港Ｐ４駐車場の駐車スペースを予約することができます。<br>
+                        まずは、会員登録（無料）をしてください。会員登録完了後、すぐに予約を開始できます。<br>
+                        予約駐車スペースには一般車室のほか、車室が広くシャッター付きで、プライバシーが<br>守れる<span class="strong_01">個室車室</span>もご用意しておりますので、是非ご利用ください。<br>
+                        <strong>予約料金</strong>は以下のとおりです。詳細は<a href="/airport/public/first">「はじめての方へ」</a>をご覧ください。<br>
+                        <strong>予約料金</strong>は予約成立時に、<strong>クレジット決済</strong>させていただきます。<br>
+                        　一般車室: ¥１，０００円<br>
+                        　個室車室: ¥２，０００円<br>
+                        ※上記金額は予約料金のみです。駐車料金は出場時の精算となります。<br>
+                        <strong>ご予約は利用規約に同意いただいた方のみ可能なサービスとなります。</strong><br>
+                        <strong>駐車場のご予約は30日前より可能となっております。</strong><br>
+                        <strong>不正な利用が確認された場合には、会員登録を取り消す場合がございます。</strong><br></p>
+                    <img src="/airport/images/index_img/captionphoto.jpg" alt="パソコンを打つ手" width="200" height="150"> </div>
+            </div>
+            <div id="wash_banner">
+                <a href="https://www.p4-carwash.com/" target="_blank">
+                    <img src="/airport/images/common_img/wash_banner.png" alt="洗車・コーティングサービス 詳細はこちら">
+                </a>
+            </div>
+
+            <div id="sub_titleber_price">
+                <h2 class="float_left_m0">駐車料金のご案内</h2>
+            </div>
+
+            <div>
+                <div style="padding-top: 15px; padding-left: 10px; text-align: left; color: #000;">
+                    <div style="font-weight: bold; font-size: 120%; margin-bottom: 15px;">
+                        羽田空港Ｐ４駐車場の予約駐車スペースのご利用には、予約料金のクレジット決済のほか、駐車料金を出場時に精算して頂きます。
+                    </div>
+                    <div style="font-size: 120%; margin-bottom: 20px; margin-right: 10px; padding-left: 30px; padding-right: 30px; text-align: left; background: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #eee), color-stop(1.00, #ccc)); background: -webkit-linear-gradient(#eee, #ccc); background: -moz-linear-gradient(#eee, #ccc); background: -o-linear-gradient(#eee, #ccc); background: -ms-linear-gradient(#eee, #ccc); background: linear-gradient(#eee, #ccc); border-radius:10px; -webkit-border-radius:10px; -moz-border-radius:10px; box-shadow:0px 5px 3px #888; -moz-box-shadow:0px 5px 3px #888; -webkit-box-shadow:0px 5px 3px #888;">
+                        <b>予約車室（一般）</b><br>
+                        予約料金の１，０００円は、予約成立時に予約料金としてご登録のクレジットカードで決済いたします。<br>
+                        入場後の駐車料金は以下のとおりです。
+                    </div>
+                    <div class="price">
+                        <span>【通常期】</span>
+                        <div>
+                            <table>
+                                <tbody><tr><th rowspan="1">入場から８時間まで</th><td>２００円／３０分</td></tr>
+                                <tr><th rowspan="2">入場から８時間以上７２時間まで２４時間毎</th><td>１５０円／６０分</td></tr>
+                                <tr><td>最大２，８００円</td></tr>
+                                <tr><th rowspan="2">入場から７２時間以上２４時間毎</th><td>１００円／６０分</td></tr>
+                                <tr><td>最大２，０００円</td></tr>
+                            </tbody></table>
+                        </div>
+                        <span>【多客期】</span>
+                        <div>
+                            <table>
+                                <tbody><tr><th rowspan="1">入場から８時間まで</th><td>２００円／３０分</td></tr>
+                                <tr><th rowspan="2">入場から８時間以上７２時間まで２４時間毎</th><td>１５０円／６０分</td></tr>
+                                <tr><td>最大３，４００円</td></tr>
+                                <tr><th rowspan="2">入場から７２時間以上２４時間毎</th><td>１００円／６０分</td></tr>
+                                <tr><td>最大２，４００円</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                    <div style="font-size: 120%; margin-bottom: 20px; padding-left: 30px; padding-right: 30px; text-align: right;">
+                        詳細は「
+                        <a href="https://tokyo-haneda.com/access/parking/index.html#nav02" target="_blank">
+                            駐車料金表
+                        </a>
+                        」をご参照ください。
+                    </div>
+
+                    <div style="font-size: 120%; margin-bottom: 20px; margin-right: 10px; padding-left: 30px; padding-right: 30px; text-align: left; background: -webkit-gradient(linear, left top, left bottom, color-stop(0.00, #eee), color-stop(1.00, #ccc)); background: -webkit-linear-gradient(#eee, #ccc); background: -moz-linear-gradient(#eee, #ccc); background: -o-linear-gradient(#eee, #ccc); background: -ms-linear-gradient(#eee, #ccc); background: linear-gradient(#eee, #ccc); border-radius:10px; -webkit-border-radius:10px; -moz-border-radius:10px; box-shadow:0px 5px 3px #888; -moz-box-shadow:0px 5px 3px #888; -webkit-box-shadow:0px 5px 3px #888;">
+                        <b>予約車室（個室）</b><br>
+                        予約料金の２，０００円は、予約成立時に予約料金としてご登録のクレジットカードで決済いたします。<br>
+                        入場後の駐車料金は以下のとおりです。
+                    </div>
+                    <div class="price">
+                        <span>【通常期】</span>
+                        <div>
+                            <table>
+                                <tbody><tr><th rowspan="1">入場から８時間まで</th><td>４００円／３０分</td></tr>
+                                <tr><th rowspan="2">入場から８時間以上７２時間まで２４時間毎</th><td>３００円／６０分</td></tr>
+                                <tr><td>最大５，６００円</td></tr>
+                                <tr><th rowspan="2">入場から７２時間以上２４時間毎</th><td>２００円／６０分</td></tr>
+                                <tr><td>最大４，０００円</td></tr>
+                            </tbody></table>
+                        </div>
+                        <span>【多客期】</span>
+                        <div>
+                            <table>
+                                <tbody><tr><th rowspan="1">入場から８時間まで</th><td>４００円／３０分</td></tr>
+                                <tr><th rowspan="2">入場から８時間以上７２時間まで２４時間毎</th><td>３００円／６０分</td></tr>
+                                <tr><td>最大６，８００円</td></tr>
+                                <tr><th rowspan="2">入場から７２時間以上２４時間毎</th><td>２００円／６０分</td></tr>
+                                <tr><td>最大４，８００円</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="notice_area">
+                <p>
+                    ※予約スペースには、幅２.１メートル、長さ５.４メートル、高さ２.３メートルを超える車両は<br>
+                    　入場できません。<br>
+                    ※障がい者等の方のご利用に際しては、所定の手続きにより料金を50％割引いたします。（駐車場<br>
+                    　ご利用時に障害者手帳等をご提示いただきます。）<br>
+                    ※一般車室の駐車スペースは、幅２.５メートル、長さ５.７メートルとなります。<br>
+                    ※個室車室の駐車スペースは、幅４.２～６.０メートル、長さ５.５メートルとなります。（場所に<br>
+                    　より広さが異なりますので、駐車場をご利用の際に係員にご確認ください。）
+                </p>
+            </div>
+
+            <span id="wash_status_success" hidden=""></span>
+        </div>
+        <!-- ここからフッターです -->
+        <div>
+    <script type="text/javascript">
+        <!--
+        function disp(url) {
+            // window.open(url, "window_name", "width=1000,height=850,scrollbars=yes");
+            window_name = window.open('about:blank', 'window_name', 'width=1000,height=850,scrollbars=yes');
+            window_name.location.href = url;
+            window_name.focus();
+            return false;
+        }
+
+        // -->
+    </script>
+
+    <div id="footerarea">
+        <p>
+            <a data-url="/airport/public/personal" target="window_name" onclick="disp(this.getAttribute('data-url'))" style="cursor: pointer;">個人情報の取り扱いについて</a>&nbsp;|
+            <a data-url="/airport/public/terms" target="window_name" onclick="disp(this.getAttribute('data-url'))" style="cursor: pointer;">ご利用規約</a>&nbsp;|
+            <a data-url="/airport/public/qa" target="window_name" onclick="disp(this.getAttribute('data-url'))" style="cursor: pointer;">Q&amp;A</a>&nbsp;|
+            <a data-url="/airport/public/inquiry" target="window_name" onclick="disp(this.getAttribute('data-url'))" style="cursor: pointer;">お問い合わせ</a>&nbsp;|
+            <a href="https://tokyo-haneda.com/" target="_blank">羽田空港旅客ターミナル</a><br>
+            Copyright(C) Japan Airport Terminal Co.,Ltd. All Rights Reserved.</p>
+    </div>
+</div>
+
+    </div>
+
+
+
+</body></html>
