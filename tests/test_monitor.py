@@ -500,6 +500,66 @@ targets:
     eq("空きが出たら通知", len(sent), 1)
     check("state は書き換わる", open(s10, encoding="utf-8").read() != first)
 
+    # ------------------------------------------------------------------
+    print("\n== 21. 羽田P4/P5アダプタ（実際に取得したHTMLで検証） ==")
+    p4 = os.path.join(ROOT, "captures", "p4.html")
+    p5 = os.path.join(ROOT, "captures", "p5.html")
+    if not (os.path.exists(p4) and os.path.exists(p5)):
+        check("キャプチャが無いのでスキップ", True)
+    else:
+        hp = adapters.get("haneda_p4p5")
+        base = {"url": "https://example.invalid/",
+                "kinds": {"一般": "public", "個室": "private"}}
+        target_dates = ["2026-08-22", "2026-08-23", "2026-08-24", "2026-08-25"]
+        html4 = open(p4, encoding="utf-8").read()
+        html5 = open(p5, encoding="utf-8").read()
+
+        for label, html in (("P4", html4), ("P5", html5)):
+            items = hp.parse(html, dict(base, dates=target_dates), None)
+            eq(f"{label}: 2種別 × 4日 = 8件", len(items), 8)
+            eq(f"{label}: 取得時点は全て満車",
+               sorted({v["status"] for v in items.values()}), ["full"])
+            check(f"{label}: 身障者枠を含まない",
+                  not any("身障者" in k for k in items))
+
+        # 日のずれは静かな誤読になるので、状態が違う日で位置を固定する
+        for label, html, date, key, expect in [
+            ("P4", html4, "2026-08-05", "一般 8/5", "congestion"),
+            ("P4", html4, "2026-08-06", "一般 8/6", "full"),
+            ("P4", html4, "2026-08-31", "個室 8/31", "congestion"),   # 月末
+            ("P5", html5, "2026-08-28", "個室 8/28", "congestion"),
+            ("P5", html5, "2026-08-02", "一般 8/2", "unavailable"),   # 期間外
+        ]:
+            got = hp.parse(html, dict(base, dates=[date]), None)[key]
+            eq(f"{label} {key} の生値", got["raw"], expect)
+
+        eq("混雑は空きあり扱い",
+           hp.parse(html4, dict(base, dates=["2026-08-05"]), None)["一般 8/5"]["status"],
+           "available")
+        eq("期間外は closed",
+           hp.parse(html5, dict(base, dates=["2026-08-02"]), None)["一般 8/2"]["status"],
+           "closed")
+
+        # 身障者枠も明示すれば読める（P5のみ。今回は使わないが取り違えの確認）
+        h = hp.parse(html5, {"url": "x", "kinds": {"身障": "handicap"},
+                             "dates": ["2026-08-16"]}, None)
+        eq("身障者枠は別カレンダーを読む", h["身障 8/16"]["raw"], "congestion")
+
+        # P4 には身障者カレンダーが無いので、指定したら失敗させる
+        try:
+            hp.parse(html4, {"url": "x", "kinds": {"身障": "handicap"},
+                             "dates": ["2026-08-22"]}, None)
+            check("P4に無い種別は失敗する", False)
+        except Exception as exc:
+            check("P4に無い種別は失敗する", "ありません" in str(exc))
+
+        # 表示中の月と違う月を指定したら、黙って別の日を読まずに失敗する
+        try:
+            hp.parse(html4, dict(base, dates=["2026-09-22"]), None)
+            check("別の月は失敗する", False)
+        except Exception as exc:
+            check("別の月は失敗する", "月" in str(exc))
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")

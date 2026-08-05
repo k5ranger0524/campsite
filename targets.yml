@@ -56,3 +56,28 @@ targets:
       # 混雑も「空きあり」として通知する
       status_map:
         konzatsu: available
+
+  - id: haneda-p4
+    name: 羽田空港 P4駐車場
+    adapter: haneda_p4p5
+    enabled: true
+    group: fast
+    config:
+      url: https://haneda-p4.jp/airport/
+      kinds:
+        一般: public
+        個室: private
+      dates: [2026-08-22, 2026-08-23, 2026-08-24, 2026-08-25]
+      # 混雑もアダプタ既定で「空きあり」扱い（身障者枠はkindsに入れないので対象外）
+
+  - id: haneda-p5
+    name: 羽田空港 P5駐車場
+    adapter: haneda_p4p5
+    enabled: true
+    group: fast
+    config:
+      url: https://pk-reserve.haneda-airport.jp/airport/entrance/0000.jsf
+      kinds:
+        一般: public
+        個室: private
+      dates: [2026-08-22, 2026-08-23, 2026-08-24, 2026-08-25]
