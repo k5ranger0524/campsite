@@ -93,11 +93,11 @@
       }
     },
     "haneda-p4": {
-      "updated_at": "2026-08-06T03:44:45.627494+09:00",
+      "updated_at": "2026-08-06T05:15:48.926338+09:00",
       "date": null,
       "items": {
         "一般 8/22": {
-          "status": "available",
+          "status": "full",
           "name": "一般 8/22",
           "notified_at": null
         },
@@ -122,12 +122,12 @@
           "notified_at": null
         },
         "個室 8/23": {
-          "status": "available",
+          "status": "full",
           "name": "個室 8/23",
           "notified_at": null
         },
         "個室 8/24": {
-          "status": "available",
+          "status": "full",
           "name": "個室 8/24",
           "notified_at": null
         },
@@ -139,5 +139,5 @@
       }
     }
   },
-  "updated_at": "2026-08-06T03:44:45.627494+09:00"
+  "updated_at": "2026-08-06T05:15:48.926338+09:00"
 }
