@@ -560,6 +560,93 @@ targets:
         except Exception as exc:
             check("別の月は失敗する", "月" in str(exc))
 
+    # ------------------------------------------------------------------
+    print("\n== 22. min_available: 同じ枠で N 日以上空いたときだけ通知する ==")
+    from core.state import StateStore, decide_notifications
+    from core.util import now_jst
+
+    def items_from(spec):
+        """spec: {"一般": [status,...], "個室": [...]} を items 形式にする"""
+        out = {}
+        for series, statuses in spec.items():
+            for i, stt in enumerate(statuses, start=22):
+                out[f"{series} 8/{i}"] = {
+                    "name": f"{series} 8/{i}", "status": stt,
+                    "series": series, "series_name": series,
+                }
+        return out
+
+    A, F = "available", "full"
+    now = now_jst()
+
+    # 2日しか空いていない → 通知しない
+    new, cont, ok = decide_notifications(
+        items_from({"一般": [A, A, F, F]}), {}, now, 2, min_available=3)
+    eq("2日では通知しない", (new, cont), ([], []))
+    eq("通知対象も空", ok, set())
+
+    # 3日空いた → 空いている3日がまとめて通知される
+    new, cont, ok = decide_notifications(
+        items_from({"一般": [A, A, A, F]}), {}, now, 2, min_available=3)
+    eq("3日で通知する", sorted(new), ["一般 8/22", "一般 8/23", "一般 8/24"])
+    eq("満車の日は入らない", "一般 8/25" in new, False)
+
+    # 枠ごとに数える: 別々の枠に1日ずつでは足りない
+    new, cont, ok = decide_notifications(
+        items_from({"一般": [A, A, F, F], "個室": [F, F, A, A]}), {}, now, 2,
+        min_available=3)
+    eq("枠をまたいだ合計では通知しない", (new, cont), ([], []))
+
+    # 片方の枠だけ条件を満たす
+    new, cont, ok = decide_notifications(
+        items_from({"一般": [A, A, A, A], "個室": [A, F, F, F]}), {}, now, 2,
+        min_available=3)
+    eq("条件を満たした枠だけ通知", sorted(new), [f"一般 8/{d}" for d in (22, 23, 24, 25)])
+    check("満たさない枠は入らない", not any(k.startswith("個室") for k in new))
+
+    # min_available=1 なら従来どおり
+    new, cont, ok = decide_notifications(
+        items_from({"一般": [A, F, F, F]}), {}, now, 2, min_available=1)
+    eq("既定(1)では1日でも通知", new, ["一般 8/22"])
+
+    print("\n== 22b. 条件を下回ったら履歴が消え、戻ったらまとめて再通知 ==")
+    s11 = os.path.join(tmp, "minavail.yml")
+    write_targets(s11, """
+targets:
+  - id: park
+    name: デモ駐車場
+    adapter: css
+    min_available: 3
+    config:
+      url: https://example.com/parking
+      items:
+        P1: {selector: "#lot-1 .status", name: 第1駐車場}
+      rules:
+        - {contains: 満車, status: full}
+        - {contains: 空車, status: available}
+      default: closed
+""")
+    st10 = os.path.join(tmp, "minavail.json")
+    store = StateStore(st10)
+
+    three = items_from({"一般": [A, A, A, F]})
+    two = items_from({"一般": [A, A, F, F]})
+
+    new, cont, ok = decide_notifications(three, {}, now, 2, min_available=3)
+    store.update("park", three, new + cont, now, None, eligible=ok)
+    eq("3日で通知した", len(new), 3)
+
+    prev = store.items_for("park")
+    new, cont, ok = decide_notifications(two, prev, now, 2, min_available=3)
+    eq("2日に減ったら通知しない", (new, cont), ([], []))
+    store.update("park", two, [], now, None, eligible=ok)
+    eq("残った空きの履歴も消える",
+       [v["notified_at"] for v in store.items_for("park").values()], [None] * 4)
+
+    prev = store.items_for("park")
+    new, cont, ok = decide_notifications(three, prev, now, 2, min_available=3)
+    eq("3日に戻ったら3日ぶんまとめて再通知", len(new), 3)
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")

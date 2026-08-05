@@ -235,6 +235,9 @@ def parse(text, config, date_str, warn=None):
                 "name": f"{area['name']} {d.month}/{d.day}",
                 "status": status,
                 "raw": raw_status,
+                # 「同じ駐車場で何日空いたか」を数えるための括り
+                "series": key,
+                "series_name": area["name"],
             }
 
     return result

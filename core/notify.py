@@ -20,7 +20,8 @@ def _when(date_str):
     return f"{date_str} は" if date_str else ""
 
 
-def build_alert(target_name, new_keys, cont_keys, items, url, date_str, repeat_hours):
+def build_alert(target_name, new_keys, cont_keys, items, url, date_str, repeat_hours,
+                min_available=1):
     lines = []
     if new_keys:
         head = f"{date_str} に空きが出ました。" if date_str else "空きが出ました。"
@@ -34,6 +35,9 @@ def build_alert(target_name, new_keys, cont_keys, items, url, date_str, repeat_h
         for key in cont_keys:
             lines.append(f"・{key}  {_name_of(items, key)}（継続中）")
         lines += ["", f"※ 空きが続く間は {repeat_hours:g} 時間ごとにお知らせします。"]
+
+    if min_available > 1:
+        lines += ["", f"※ 同じ枠で {min_available} 日以上空いたときにお知らせしています。"]
 
     lines += ["", "予約ページ:", url]
     return "\n".join(lines)

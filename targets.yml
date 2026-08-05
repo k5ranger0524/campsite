@@ -45,6 +45,8 @@ targets:
     name: 羽田空港 第2・第3駐車場
     adapter: haneda_parking
     enabled: true
+    # 8/22〜25 のうち、同じ駐車場で3日以上空いたときだけ通知する
+    min_available: 3
     # 空きが十数分で消えるため短い間隔で確認する
     group: fast
     config:
@@ -62,6 +64,8 @@ targets:
     adapter: haneda_p4p5
     enabled: true
     group: fast
+    # 8/22〜25 のうち、同じ種別で3日以上空いたときだけ通知する
+    min_available: 3
     config:
       url: https://haneda-p4.jp/airport/
       kinds:
@@ -75,6 +79,8 @@ targets:
     adapter: haneda_p4p5
     enabled: true
     group: fast
+    # 8/22〜25 のうち、同じ種別で3日以上空いたときだけ通知する
+    min_available: 3
     config:
       url: https://pk-reserve.haneda-airport.jp/airport/entrance/0000.jsf
       kinds:

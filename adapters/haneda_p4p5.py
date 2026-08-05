@@ -224,6 +224,9 @@ def parse(html, config, date_str, warn=None):
                 "name": f"{label} {d.month}/{d.day}",
                 "status": status,
                 "raw": raw,
+                # 「同じ種別で何日空いたか」を数えるための括り
+                "series": label,
+                "series_name": label,
             }
 
     return result

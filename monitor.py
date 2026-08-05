@@ -92,7 +92,8 @@ def check_target(target, args, store, now):
     if not previous:
         log("  前回の状態がありません（初回確認）")
 
-    new_keys, cont_keys = decide_notifications(items, previous, now, target.repeat_hours)
+    new_keys, cont_keys, eligible = decide_notifications(
+        items, previous, now, target.repeat_hours, target.min_available)
 
     if new_keys or cont_keys:
         if new_keys:
@@ -102,7 +103,8 @@ def check_target(target, args, store, now):
         nt.deliver(
             nt.build_alert_title(target.name, new_keys),
             nt.build_alert(target.name, new_keys, cont_keys, items, url,
-                           target.date, target.repeat_hours),
+                           target.date, target.repeat_hours,
+                           min_available=target.min_available),
             url,
         )
     else:
@@ -112,7 +114,8 @@ def check_target(target, args, store, now):
     if args.file and not args.write_state_from_file:
         log("  --file モードのため state は更新しません（--write-state-from-file で上書き可）")
     else:
-        if store.update(target.id, items, new_keys + cont_keys, now, target.date):
+        if store.update(target.id, items, new_keys + cont_keys, now, target.date,
+                        eligible=eligible):
             log(f"  状態を保存しました: {args.state}")
         else:
             log("  前回から変化なし（state は書き換えません）")

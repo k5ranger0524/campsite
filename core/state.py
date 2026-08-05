@@ -48,7 +48,8 @@ class StateStore:
         items = section.get("items")
         return items if isinstance(items, dict) else {}
 
-    def update(self, target_id, items, notified_keys, now, date_str=None):
+    def update(self, target_id, items, notified_keys, now, date_str=None,
+               eligible=None):
         """1つの対象の状態を書き込む。正常にパースできた時だけ呼ぶこと。
 
         notified_at は「空きあり中の最終通知時刻」。
@@ -59,10 +60,16 @@ class StateStore:
         戻り値は実際に書き込んだかどうか。
         """
         previous = self.items_for(target_id)
+        if eligible is None:
+            eligible = {k for k, v in items.items() if st.is_available(v["status"])}
+
         out = {}
         for key, info in items.items():
-            if not st.is_available(info["status"]):
-                notified_at = None                      # 空きが消えたらリセット
+            # 通知対象から外れた項目は履歴を消す。
+            # 例: 3日以上で通知する設定で2日に減った場合、次に3日に戻ったときは
+            #     残っていた日も含めて「新規」としてまとめて通知される。
+            if key not in eligible:
+                notified_at = None
             elif key in notified_keys:
                 notified_at = now.isoformat()
             else:
@@ -95,22 +102,58 @@ class StateStore:
         os.replace(tmp, self.path)
 
 
-def decide_notifications(current, previous, now, repeat_hours):
+def series_of(key, info):
+    """通知をまとめる単位。アダプタが series を付けていなければ項目そのもの。"""
+    return (info or {}).get("series") or key
+
+
+def eligible_keys(current, min_available=1):
+    """通知の対象にしてよい項目を返す。
+
+    min_available が2以上なら、「同じ系列（駐車場×種別など）の中で、
+    空きが min_available 日以上あるとき」だけ通知の対象になる。
+    1日だけ空いても泊まれない、という条件をここで表現する。
+    """
+    if min_available <= 1:
+        return {k for k, v in current.items() if st.is_available(v["status"])}
+
+    by_series = {}
+    for key, info in current.items():
+        by_series.setdefault(series_of(key, info), []).append((key, info))
+
+    ok = set()
+    for series, entries in by_series.items():
+        avail = [k for k, v in entries if st.is_available(v["status"])]
+        if len(avail) >= min_available:
+            ok.update(avail)
+        elif avail:
+            label = (entries[0][1].get("series_name") or series)
+            log(f"  {label}: 空きは {len(avail)}日 "
+                f"（{min_available}日以上で通知）→ 見送り: {', '.join(sorted(avail))}")
+    return ok
+
+
+def decide_notifications(current, previous, now, repeat_hours, min_available=1):
     """通知すべきキーを (新規, 継続中) に分けて返す。
 
-    新規  : 空きあり以外 → 空きあり に変化した
-    継続中: 空きありが続いていて、最終通知から repeat_hours 以上経過した
+    新規  : 通知対象になっていなかったものが、通知対象になった
+    継続中: 通知対象のままで、最終通知から repeat_hours 以上経過した
+
+    min_available が2以上のときは、条件を満たさない系列の項目は
+    空きがあっても通知対象にしない（notified_at も持たせない）。
+    そのため、条件を満たした時点で「空いている日がまとめて」通知される。
     """
     new_keys, cont_keys = [], []
     interval = timedelta(hours=repeat_hours)
+    ok = eligible_keys(current, min_available)
 
-    for key, info in current.items():
-        if not st.is_available(info["status"]):
+    for key in current:
+        if key not in ok:
             continue
         prev = previous.get(key) or {}
         last = parse_dt(prev.get("notified_at"))
 
-        if not st.is_available(prev.get("status")) or last is None:
+        if last is None:
             new_keys.append(key)
         elif now - last >= interval:
             cont_keys.append(key)
@@ -118,4 +161,4 @@ def decide_notifications(current, previous, now, repeat_hours):
             mins = int((interval - (now - last)).total_seconds() // 60)
             log(f"  {key}: 空きあり継続中だが前回通知から {mins} 分後まで再通知しません")
 
-    return new_keys, cont_keys
+    return new_keys, cont_keys, ok
