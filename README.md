@@ -285,11 +285,17 @@ https://reserve.489ban.net/...
 ## テスト
 
 ```bash
-python3 tests/test_monitor.py
+python3 tests/test_monitor.py      # パース・通知・状態遷移など
+python3 tests/test_tls_fallback.py # 中間証明書を送らないサーバへの対応
 ```
 
 パース・日付列の解決・通知判定・再通知間隔・状態遷移・複数対象のエラー分離・
 設定の検証・羽田各駐車場アダプタ・確認頻度グループを 125 項目で検証する。ntfy送信とHTTP取得は差し替えるので通信は行わない。
+
+`test_tls_fallback.py` は自前のルートCA・中間CA・サーバ証明書を作り、
+「中間証明書を送らないHTTPSサーバ」を localhost に立てて検証する
+（haneda-p4.jp が実際にこの状態）。検証を緩めていないこと、
+偽の中間証明書を受け入れないことも確かめている。
 
 `tests/fixtures/` は `tests/make_fixture.py` が生成する合成データだが、
 ban489 のヘッダ表記（先頭列だけ月付き）は実サイトの `debug.html` に合わせてある。
