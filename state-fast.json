@@ -137,7 +137,18 @@
           "notified_at": null
         }
       }
+    },
+    "henna-hotel-haneda": {
+      "updated_at": "2026-08-09T08:14:29.228783+09:00",
+      "date": "2026-08-22",
+      "items": {
+        "8/22": {
+          "status": "full",
+          "name": "変なホテル東京羽田駐車場 8/22（土）",
+          "notified_at": null
+        }
+      }
     }
   },
-  "updated_at": "2026-08-09T06:31:22.748445+09:00"
+  "updated_at": "2026-08-09T08:14:29.228783+09:00"
 }
