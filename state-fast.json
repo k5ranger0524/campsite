@@ -1,7 +1,7 @@
 {
   "targets": {
     "haneda-parking": {
-      "updated_at": "2026-08-07T09:32:04.806317+09:00",
+      "updated_at": "2026-08-08T10:15:30.534772+09:00",
       "date": null,
       "items": {
         "P2 8/22": {
@@ -40,7 +40,7 @@
           "notified_at": null
         },
         "P3 8/25": {
-          "status": "full",
+          "status": "available",
           "name": "第3駐車場(P3/第2ターミナル) 8/25",
           "notified_at": null
         }
@@ -93,28 +93,28 @@
       }
     },
     "haneda-p4": {
-      "updated_at": "2026-08-08T08:56:44.059938+09:00",
+      "updated_at": "2026-08-08T10:15:30.534772+09:00",
       "date": null,
       "items": {
         "一般 8/22": {
-          "status": "available",
+          "status": "full",
           "name": "一般 8/22",
-          "notified_at": "2026-08-08T08:56:44.059938+09:00"
+          "notified_at": null
         },
         "一般 8/23": {
-          "status": "available",
+          "status": "full",
           "name": "一般 8/23",
-          "notified_at": "2026-08-08T08:56:44.059938+09:00"
+          "notified_at": null
         },
         "一般 8/24": {
-          "status": "available",
+          "status": "full",
           "name": "一般 8/24",
-          "notified_at": "2026-08-08T08:56:44.059938+09:00"
+          "notified_at": null
         },
         "一般 8/25": {
-          "status": "available",
+          "status": "full",
           "name": "一般 8/25",
-          "notified_at": "2026-08-08T08:56:44.059938+09:00"
+          "notified_at": null
         },
         "個室 8/22": {
           "status": "full",
@@ -139,5 +139,5 @@
       }
     }
   },
-  "updated_at": "2026-08-08T08:56:44.059938+09:00"
+  "updated_at": "2026-08-08T10:15:30.534772+09:00"
 }
