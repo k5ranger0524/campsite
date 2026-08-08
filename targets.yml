@@ -103,3 +103,16 @@ targets:
       # 予約可能日数は14日。監視開始が早いと目的日はまだ表に出てこないので、
       # それを異常にせず「受付不可」として正常終了させる
       allow_out_of_range: true
+
+  - id: harmony-haneda-west
+    name: ハーモニーレジデンス羽田ウエスト駐車場
+    adapter: btimes
+    date: 2026-08-22
+    enabled: true
+    group: fast
+    min_available: 1
+    config:
+      pref: tokyo
+      park_id: 43295
+      name: ハーモニーレジデンス羽田ウエスト駐車場
+      allow_out_of_range: true

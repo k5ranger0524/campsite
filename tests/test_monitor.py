@@ -681,6 +681,20 @@ targets:
         check("空きの行には時間帯と料金が入る",
               "15:00〜24:00" in got["name"] and "1,300円" in got["name"])
 
+    # 別の駐車場でも同じアダプタで読めること（設定だけで増やせる作りの確認）
+    other = os.path.join(ROOT, "captures", "btimes-43295.html")
+    if os.path.exists(other):
+        ocfg = {"pref": "tokyo", "park_id": 43295,
+                "name": "ハーモニーレジデンス羽田ウエスト駐車場"}
+        with open(other, encoding="utf-8") as f:
+            ohtml = f.read()
+        eq("別の駐車場も14行", len(bt.discover(ohtml, ocfg, None)), 14)
+        eq("別の駐車場: 8/22 は満車",
+           bt.parse(ohtml, ocfg, "2026-08-22")["8/22"]["status"], "full")
+        got = bt.parse(ohtml, ocfg, "2026-08-21")["8/21"]
+        eq("別の駐車場: 8/21 は空きあり", got["status"], "available")
+        check("駐車場名が表示に入る", "ハーモニーレジデンス" in got["name"])
+
     print("\n  -- 異常系（合成HTML） --")
     eq("合成: 8/22 は満車", bt_parse("btimes_ok.html", "2026-08-22")["8/22"]["status"],
        "full")
