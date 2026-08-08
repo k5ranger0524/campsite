@@ -87,3 +87,19 @@ targets:
         一般: public
         個室: private
       dates: [2026-08-22, 2026-08-23, 2026-08-24, 2026-08-25]
+
+  - id: henna-hotel-haneda
+    name: 変なホテル東京羽田駐車場
+    adapter: btimes
+    date: 2026-08-22
+    enabled: true
+    # 羽田周辺はキャンセルが数分で消えるため短い間隔で確認する
+    group: fast
+    min_available: 1
+    config:
+      pref: tokyo
+      park_id: 55937
+      name: 変なホテル東京羽田駐車場
+      # 予約可能日数は14日。監視開始が早いと目的日はまだ表に出てこないので、
+      # それを異常にせず「受付不可」として正常終了させる
+      allow_out_of_range: true

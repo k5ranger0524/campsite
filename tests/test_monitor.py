@@ -647,6 +647,76 @@ targets:
     new, cont, ok = decide_notifications(three, prev, now, 2, min_available=3)
     eq("3日に戻ったら3日ぶんまとめて再通知", len(new), 3)
 
+    # ------------------------------------------------------------------
+    print("\n== 23. btimes アダプタ ==")
+    import make_btimes_fixture
+    make_btimes_fixture.main()
+
+    bt = adapters.get("btimes")
+    bcfg = {"pref": "tokyo", "park_id": 55937, "name": "変なホテル東京羽田駐車場"}
+
+    def bt_parse(fixture, date, **extra):
+        path = fixture if os.path.isabs(fixture) else os.path.join(FIX, fixture)
+        with open(path, encoding="utf-8") as f:
+            return bt.parse(f.read(), dict(bcfg, **extra), date, warn=lambda m: None)
+
+    eq("URLを組み立てる", bt.build_url(bcfg, None),
+       "https://btimes.jp/tokyo/park/55937/")
+
+    live = os.path.join(ROOT, "captures", "btimes-live.html")
+    if not os.path.exists(live):
+        check("実サイトのHTMLが無いのでスキップ", True)
+    else:
+        with open(live, encoding="utf-8") as f:
+            live_html = f.read()
+        rows = bt.discover(live_html, bcfg, None)
+        eq("実HTML: 14行すべて認識", len(rows), 14)
+        eq("実HTML: 8/09〜8/22 が日付付きで並ぶ",
+           [r["key"] for r in rows],
+           [f"2026-08-{d:02d}" for d in range(9, 23)])
+        eq("実HTML: 8/22 は満車",
+           bt_parse(live, "2026-08-22")["8/22"]["status"], "full")
+        got = bt_parse(live, "2026-08-18")["8/18"]
+        eq("実HTML: 8/18 は空きあり", got["status"], "available")
+        check("空きの行には時間帯と料金が入る",
+              "15:00〜24:00" in got["name"] and "1,300円" in got["name"])
+
+    print("\n  -- 異常系（合成HTML） --")
+    eq("合成: 8/22 は満車", bt_parse("btimes_ok.html", "2026-08-22")["8/22"]["status"],
+       "full")
+    eq("合成: 8/18 は空きあり",
+       bt_parse("btimes_ok.html", "2026-08-18")["8/18"]["status"], "available")
+
+    for fixture, date, fragment, desc in [
+        ("btimes_unknown_status.html", "2026-08-22", "判定できません", "未知のstatus classは失敗"),
+        ("btimes_no_date.html", "2026-08-22", "日付を取得できません", "日付属性が無ければ失敗"),
+        ("btimes_label_mismatch.html", "2026-08-22", "食い違って", "表示日付との食い違いを検出"),
+        ("btimes_empty.html", "2026-08-22", "見つかりません", "行が無ければ失敗"),
+        ("btimes_out_of_range.html", "2026-08-22", "見つかりません", "範囲外は既定で失敗"),
+    ]:
+        try:
+            bt_parse(fixture, date)
+            check(desc, False)
+        except Exception as exc:
+            check(f"{desc}（{type(exc).__name__}）", fragment in str(exc))
+
+    # 範囲外を許容する設定なら、受付不可として正常に返す
+    out = bt_parse("btimes_out_of_range.html", "2026-08-22", allow_out_of_range=True)
+    eq("範囲外を許容すると closed で正常終了", out["8/22"]["status"], "closed")
+    eq("範囲外の目印を残す", out["8/22"]["raw"], "out-of-range")
+    check("範囲外だと分かる表示名", "表示範囲外" in out["8/22"]["name"])
+
+    # tr の class とバッジが食い違ったら、バッジを採用しつつ警告する
+    warned = []
+    with open(os.path.join(FIX, "btimes_class_conflict.html"), encoding="utf-8") as f:
+        got = bt.parse(f.read(), bcfg, "2026-08-22", warn=warned.append)
+    eq("バッジ側を採用する", got["8/22"]["status"], "available")
+    check("食い違いを警告する", any("食い違" in w for w in warned))
+
+    # 行番号で引いていないこと: 窓がずれても日付で正しく引ける
+    shifted = bt_parse("btimes_out_of_range.html", "2026-08-05")
+    eq("窓がずれても日付で引ける", shifted["8/5"]["status"], "full")
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")
