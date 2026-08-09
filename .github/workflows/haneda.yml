@@ -1,10 +1,16 @@
-name: monitor-fast (10分ごと)
+name: monitor-fast (起動ごとに25分間、3分おき)
 
 # targets.yml で group: fast を指定した対象を確認する。
 # 空きが数分〜十数分で消える対象（羽田の駐車場など）向け。
 #
+# GitHubのスケジュール実行は best-effort で、*/10 と書いても実測は
+# 中央値32分・最大144分の間隔だった（10分±1分で動いた回数は0）。
+# そこで起動の粒度には頼らず、1回の起動の中で25分間・3分おきに確認する。
+# concurrency により次の起動は前の実行の終了を待つので、
+# 起動が詰まっているときはほぼ連続して見張ることになる。
+#
 # 状態ファイルは monitor-normal とは別にしてある。
-# 10分ごとと30分ごとが同じファイルを押し合うと、コミットが衝突するため。
+# 同じファイルを押し合うと、コミットが衝突するため。
 
 on:
   schedule:
@@ -17,6 +23,14 @@ on:
         description: '通知テスト（空き状況に関わらず通知を1回送る）'
         type: boolean
         default: false
+      loop_minutes:
+        description: '1回の起動で何分間くり返し確認するか'
+        type: string
+        default: '25'
+      interval_seconds:
+        description: 'くり返しの間隔（秒）'
+        type: string
+        default: '180'
 
 permissions:
   contents: write
@@ -28,6 +42,8 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # ループぶんに余裕を持たせつつ、万一止まらなくなったときの保険
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -42,11 +58,15 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           # 入力を直接シェルに展開しない（インジェクション対策）
           TEST_NOTIFY: ${{ inputs.test_notify }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || '25' }}
+          INTERVAL_SECONDS: ${{ inputs.interval_seconds || '180' }}
         run: |
           if [ "$TEST_NOTIFY" = "true" ]; then
+            # テスト通知は1回だけでよい
             python3 monitor.py --group fast --state state-fast.json --test-notify
           else
-            python3 monitor.py --group fast --state state-fast.json
+            python3 monitor.py --group fast --state state-fast.json \
+              --loop-minutes "$LOOP_MINUTES" --interval-seconds "$INTERVAL_SECONDS"
           fi
 
       - name: state を保存

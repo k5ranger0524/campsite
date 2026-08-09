@@ -778,6 +778,82 @@ targets:
     shifted = bt_parse("btimes_out_of_range.html", "2026-08-05")
     eq("窓がずれても日付で引ける", shifted["8/5"]["status"], "full")
 
+    # ------------------------------------------------------------------
+    print("\n== 24. 1回の起動の中で繰り返し確認する（--loop-minutes） ==")
+    loopy = write_targets(os.path.join(tmp, "loop.yml"), """
+targets:
+  - id: loopcamp
+    name: ループ確認用
+    adapter: ban489
+    date: 2026-09-19
+    config:
+      facility: loop-camp
+      items: {F1: room_24246, F2: room_24247}
+""")
+    s12 = os.path.join(tmp, "loop.json")
+    ROUTES.clear(); ROUTES["loop-camp"] = "all_full.html"
+
+    # 0.05分(3秒)・1秒間隔 → 3回前後まわる
+    code, sent = run(loopy, s12, "--loop-minutes", "0.05", "--interval-seconds", "1")
+    eq("exit 0", code, 0)
+    eq("空きが無いので通知なし", len(sent), 0)
+    check("state は書かれている", os.path.exists(s12))
+
+    # 途中で空きが出たら、その回で通知される
+    calls = {"n": 0}
+    real_fetch = monitor.fetch_html
+
+    def flipping(url, *a, **k):
+        calls["n"] += 1
+        name = "all_full.html" if calls["n"] <= 2 else "f2f3_available.html"
+        with open(os.path.join(FIX, name), encoding="utf-8") as f:
+            return f.read()
+
+    monitor.fetch_html = flipping
+    s13 = os.path.join(tmp, "loop2.json")
+    code, sent = run(loopy, s13, "--loop-minutes", "0.08", "--interval-seconds", "1")
+    monitor.fetch_html = real_fetch
+    eq("exit 0", code, 0)
+    eq("途中で空きが出たら通知する", len(sent), 1)
+    check("空いた枠が載る", "・F2" in sent[0]["message"])
+    check("3回以上まわった", calls["n"] >= 3)
+
+    # 一時的な失敗が最後に復旧していれば、ジョブは失敗させない
+    calls = {"n": 0}
+
+    def flaky(url, *a, **k):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise nt.MonitorError("テスト: 一時的な取得失敗")
+        with open(os.path.join(FIX, "all_full.html"), encoding="utf-8") as f:
+            return f.read()
+
+    monitor.fetch_html = flaky
+    s14 = os.path.join(tmp, "loop3.json")
+    code, sent = run(loopy, s14, "--loop-minutes", "0.05", "--interval-seconds", "1")
+    monitor.fetch_html = real_fetch
+    eq("一時的な失敗は exit 0（復旧したため）", code, 0)
+    check("復旧後の state は書かれる", os.path.exists(s14))
+
+    # 最後まで失敗し続けたら exit 1
+    def broken(url, *a, **k):
+        raise nt.MonitorError("テスト: ずっと失敗")
+
+    monitor.fetch_html = broken
+    s15 = os.path.join(tmp, "loop4.json")
+    code, sent = run(loopy, s15, "--loop-minutes", "0.05", "--interval-seconds", "1")
+    monitor.fetch_html = real_fetch
+    eq("最後まで失敗なら exit 1", code, 1)
+    check("state を作らない", not os.path.exists(s15))
+
+    # --loop-minutes 未指定なら1回で終わる（従来どおり）
+    calls = {"n": 0}
+    monitor.fetch_html = flipping
+    s16 = os.path.join(tmp, "loop5.json")
+    code, sent = run(loopy, s16)
+    monitor.fetch_html = real_fetch
+    eq("既定は1回だけ", calls["n"], 1)
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")

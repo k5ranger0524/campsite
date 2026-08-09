@@ -17,6 +17,8 @@ adapters/ 以下のモジュールが持ち、それ以外（取得・状態管�
     python3 monitor.py --list                   # 対象の一覧
     python3 monitor.py --target X --file a.html # ローカルHTMLでパースを確認
     python3 monitor.py --test-notify            # 通知を強制発火して疎通確認
+    python3 monitor.py --loop-minutes 25 --interval-seconds 180
+                                                # 25分間、3分おきに繰り返し確認
 
 終了コード:
     0  正常終了（通知なし、または通知の送信に成功）
@@ -26,6 +28,7 @@ adapters/ 以下のモジュールが持ち、それ以外（取得・状態管�
 
 import argparse
 import sys
+import time
 
 import adapters
 from core import notify as nt
@@ -162,18 +165,51 @@ def run(args):
             )
 
     store = StateStore(args.state)
-    now = now_jst()
-    failures = []
 
-    for target in targets:
-        log(f"■ {target.name} [{target.id}] {target.date or ''}".rstrip())
-        try:
-            check_target(target, args, store, now)
-        except MonitorError as exc:
-            # 1つ壊れても他の対象の確認は続ける。失敗した対象の state は書かない。
-            log(f"  エラー: {exc}")
-            log("  この対象の state は更新していません")
-            failures.append(target.id)
+    # GitHubのスケジュール実行は best-effort で、10分ごとの設定でも実測は
+    # 中央値32分・最大144分だった。起動の粒度に頼らず、1回の起動の中で
+    # 繰り返し確認することで実質的な間隔を詰める。
+    looping = args.loop_minutes > 0
+    deadline = time.monotonic() + args.loop_minutes * 60 if looping else None
+
+    round_no = 0
+    failures = []
+    transient = {}
+
+    while True:
+        round_no += 1
+        if looping:
+            log(f"―― {round_no}回目 ――")
+
+        now = now_jst()
+        failures = []
+        for target in targets:
+            log(f"■ {target.name} [{target.id}] {target.date or ''}".rstrip())
+            try:
+                check_target(target, args, store, now)
+            except MonitorError as exc:
+                # 1つ壊れても他の対象の確認は続ける。失敗した対象の state は書かない。
+                log(f"  エラー: {exc}")
+                log("  この対象の state は更新していません")
+                failures.append(target.id)
+                transient[target.id] = transient.get(target.id, 0) + 1
+
+        if not looping:
+            break
+
+        remaining = deadline - time.monotonic()
+        # 次の1回を回しきれないなら、待たずに終える
+        if remaining < args.interval_seconds:
+            break
+        time.sleep(args.interval_seconds)
+
+    if looping:
+        log(f"―― {round_no}回確認しました ――")
+        recovered = {t: n for t, n in transient.items() if t not in failures}
+        if recovered:
+            # 途中で失敗したが最後は成功した対象。ジョブは失敗させない
+            log("一時的に失敗したが復旧した対象: "
+                + ", ".join(f"{t}({n}回)" for t, n in recovered.items()))
 
     if failures:
         log(f"失敗した対象: {', '.join(failures)}")
@@ -190,6 +226,14 @@ def main():
     ap.add_argument("--state", default="state.json", help="状態ファイル")
     ap.add_argument("--file", help="実サイトの代わりにローカルHTMLを読む（テスト用）")
     ap.add_argument("--test-notify", action="store_true", help="通知を強制発火する")
+    ap.add_argument(
+        "--loop-minutes", type=float, default=0,
+        help="この分数のあいだ、1回の起動の中で繰り返し確認する（0で1回だけ）",
+    )
+    ap.add_argument(
+        "--interval-seconds", type=int, default=180,
+        help="--loop-minutes のときの確認間隔（既定180秒）",
+    )
     ap.add_argument(
         "--write-state-from-file", action="store_true",
         help="--file でも state を更新する（テスト用）",
