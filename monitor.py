@@ -164,6 +164,12 @@ def run(args):
                 "通知先が無いまま監視しても空きに気づけないため終了します"
             )
 
+    # 条件を満たさない回は通知の判定結果が何も出ないので、設定を書き換えたときに
+    # それが効いているかをログだけで確かめられるよう、起動時に出しておく。
+    for t in targets:
+        log(f"通知条件: {t.name} … {t.describe_condition()}"
+            f"（空きが続く間は {t.repeat_hours:g} 時間ごとに再通知）")
+
     store = StateStore(args.state)
 
     # GitHubのスケジュール実行は best-effort で、10分ごとの設定でも実測は

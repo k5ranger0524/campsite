@@ -40,6 +40,21 @@ class Target:
             raw.get("repeat_hours", defaults.get("repeat_hours", DEFAULT_REPEAT_HOURS))
         )
 
+    def describe_condition(self):
+        """どういうときに通知するかを1行で表す。
+
+        設定を書き換えたあと「本当にその条件で動いているか」を実行ログだけで
+        確かめられるようにするためのもの。条件を満たさない回は何も出力されず、
+        黙って正しく動いているのか設定が効いていないのかを区別できないため。
+        """
+        if self.min_available > 1:
+            text = f"同じ枠で {self.min_available} 件そろったら通知"
+        else:
+            text = "1件でも空いたら通知"
+        if self.priority_dates:
+            text += "（ただし " + "・".join(self.priority_dates) + " は単独でも通知）"
+        return text
+
     def __repr__(self):
         return f"<Target {self.id} adapter={self.adapter}>"
 

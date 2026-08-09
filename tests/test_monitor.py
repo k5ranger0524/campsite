@@ -7,6 +7,8 @@
 実行: python3 tests/test_monitor.py
 """
 
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -853,6 +855,48 @@ targets:
     code, sent = run(loopy, s16)
     monitor.fetch_html = real_fetch
     eq("既定は1回だけ", calls["n"], 1)
+
+    # ------------------------------------------------------------------
+    print("\n== 25. 通知条件を起動時にログへ出す（設定が効いているかログだけで分かる） ==")
+    # 条件を満たさない回は通知の判定結果が何も出ないので、
+    # 設定を書き換えたときに効いているかを確かめる手段が要る。
+    from core.targets import Target
+
+    eq("既定は1件でも通知",
+       Target({"id": "a", "adapter": "css"}, {}).describe_condition(),
+       "1件でも空いたら通知")
+    eq("min_available を反映する",
+       Target({"id": "a", "adapter": "css", "min_available": 4}, {}).describe_condition(),
+       "同じ枠で 4 件そろったら通知")
+    eq("priority_dates も出す",
+       Target({"id": "a", "adapter": "css", "min_available": 3,
+               "priority_dates": ["2026-08-22"]}, {}).describe_condition(),
+       "同じ枠で 3 件そろったら通知（ただし 2026-08-22 は単独でも通知）")
+
+    s17 = write_targets(os.path.join(tmp, "cond.yml"), """
+targets:
+  - id: park
+    name: デモ駐車場
+    adapter: ban489
+    date: 2026-09-19
+    min_available: 4
+    repeat_hours: 2
+    config:
+      facility: cond-camp
+      items: {F1: room_24246, F2: room_24247}
+""")
+    ROUTES.clear()
+    ROUTES["cond-camp"] = "all_full.html"
+    monitor.fetch_html = fake_fetch
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        code, sent = run(s17, os.path.join(tmp, "cond.json"))
+    out = buf.getvalue()
+    eq("正常終了する", code, 0)
+    check("条件がログに出る",
+          "通知条件: デモ駐車場 … 同じ枠で 4 件そろったら通知"
+          "（空きが続く間は 2 時間ごとに再通知）" in out)
+    check("空きが無い回でも出る", "通知対象はありません" in out)
 
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
