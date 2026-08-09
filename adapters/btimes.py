@@ -244,6 +244,7 @@ def parse(html, config, date_str, warn=None):
                     "raw": "out-of-range",
                     "series": park_name,
                     "series_name": park_name,
+                    "date": f"{target:%Y-%m-%d}",
                 }
             }
         raise MonitorError(
@@ -262,6 +263,7 @@ def parse(html, config, date_str, warn=None):
             "raw": found["raw"],
             "series": park_name,
             "series_name": park_name,
+            "date": f"{target:%Y-%m-%d}",
         }
     }
 

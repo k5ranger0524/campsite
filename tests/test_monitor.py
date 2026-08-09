@@ -609,6 +609,53 @@ targets:
         items_from({"一般": [A, F, F, F]}), {}, now, 2, min_available=1)
     eq("既定(1)では1日でも通知", new, ["一般 8/22"])
 
+    print("\n== 22a. priority_dates: その日だけは1日でも通知する ==")
+
+    def dated(spec):
+        """items_from に ISO日付を足したもの（例外日の判定に使う）"""
+        out = items_from(spec)
+        for key, info in out.items():
+            day = int(key.split("/")[-1])
+            info["date"] = f"2026-08-{day:02d}"
+        return out
+
+    PRIO = ["2026-08-22"]
+
+    # 8/22 だけ空き → 3日に満たなくても通知する
+    new, cont, ok = decide_notifications(
+        dated({"一般": [A, F, F, F]}), {}, now, 2, min_available=3, priority_dates=PRIO)
+    eq("8/22 単独でも通知", new, ["一般 8/22"])
+
+    # 8/23 だけ空き → 通知しない（例外日ではない）
+    new, cont, ok = decide_notifications(
+        dated({"一般": [F, A, F, F]}), {}, now, 2, min_available=3, priority_dates=PRIO)
+    eq("8/23 単独では通知しない", (new, cont), ([], []))
+
+    # 8/22 と 8/23 が空き（2日）→ 8/22 だけ通知、8/23 は据え置き
+    new, cont, ok = decide_notifications(
+        dated({"一般": [A, A, F, F]}), {}, now, 2, min_available=3, priority_dates=PRIO)
+    eq("2日でも 8/22 は通知", new, ["一般 8/22"])
+    check("8/23 は通知しない", "一般 8/23" not in ok)
+
+    # 3日空いた（8/23-25）→ 8/22 が満車でも3日条件で通知
+    new, cont, ok = decide_notifications(
+        dated({"一般": [F, A, A, A]}), {}, now, 2, min_available=3, priority_dates=PRIO)
+    eq("3日条件は従来どおり", sorted(new), ["一般 8/23", "一般 8/24", "一般 8/25"])
+
+    # 枠ごとに独立して効く
+    new, cont, ok = decide_notifications(
+        dated({"一般": [A, F, F, F], "個室": [F, A, F, F]}), {}, now, 2,
+        min_available=3, priority_dates=PRIO)
+    eq("一般の8/22だけ通知", new, ["一般 8/22"])
+
+    # 通知本文に条件が書かれる
+    msg = nt.build_alert("テスト駐車場", ["一般 8/22"], [],
+                         dated({"一般": [A, F, F, F]}),
+                         "https://example.com", None, 2,
+                         min_available=3, priority_dates=PRIO)
+    check("本文に3日以上の条件", "3 日以上" in msg)
+    check("本文に例外日", "8/22" in msg)
+
     print("\n== 22b. 条件を下回ったら履歴が消え、戻ったらまとめて再通知 ==")
     s11 = os.path.join(tmp, "minavail.yml")
     write_targets(s11, """

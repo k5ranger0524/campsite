@@ -20,8 +20,16 @@ def _when(date_str):
     return f"{date_str} は" if date_str else ""
 
 
+def _short_date(iso):
+    try:
+        y, m, d = str(iso).split("-")
+        return f"{int(m)}/{int(d)}"
+    except (ValueError, AttributeError):
+        return str(iso)
+
+
 def build_alert(target_name, new_keys, cont_keys, items, url, date_str, repeat_hours,
-                min_available=1):
+                min_available=1, priority_dates=()):
     lines = []
     if new_keys:
         head = f"{date_str} に空きが出ました。" if date_str else "空きが出ました。"
@@ -37,7 +45,11 @@ def build_alert(target_name, new_keys, cont_keys, items, url, date_str, repeat_h
         lines += ["", f"※ 空きが続く間は {repeat_hours:g} 時間ごとにお知らせします。"]
 
     if min_available > 1:
-        lines += ["", f"※ 同じ枠で {min_available} 日以上空いたときにお知らせしています。"]
+        note = f"※ 同じ枠で {min_available} 日以上"
+        if priority_dates:
+            note += "、または " + "・".join(_short_date(d) for d in priority_dates)
+        note += "空いたときにお知らせしています。"
+        lines += ["", note]
 
     lines += ["", "予約ページ:", url]
     return "\n".join(lines)

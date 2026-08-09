@@ -227,6 +227,7 @@ def parse(html, config, date_str, warn=None):
                 # 「同じ種別で何日空いたか」を数えるための括り
                 "series": label,
                 "series_name": label,
+                "date": f"{d:%Y-%m-%d}",
             }
 
     return result

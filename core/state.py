@@ -107,33 +107,41 @@ def series_of(key, info):
     return (info or {}).get("series") or key
 
 
-def eligible_keys(current, min_available=1):
+def eligible_keys(current, min_available=1, priority_dates=()):
     """通知の対象にしてよい項目を返す。
 
     min_available が2以上なら、「同じ系列（駐車場×種別など）の中で、
     空きが min_available 日以上あるとき」だけ通知の対象になる。
     1日だけ空いても泊まれない、という条件をここで表現する。
+
+    priority_dates に入れた日は例外で、1日だけ空いても通知の対象になる。
+    「まとまって取れたら嬉しいが、この日だけは単独でも知りたい」を表す。
     """
+    available = {k for k, v in current.items() if st.is_available(v["status"])}
     if min_available <= 1:
-        return {k for k, v in current.items() if st.is_available(v["status"])}
+        return available
+
+    prio = set(priority_dates or ())
+    ok = {k for k in available if (current[k].get("date") in prio)}
 
     by_series = {}
-    for key, info in current.items():
-        by_series.setdefault(series_of(key, info), []).append((key, info))
+    for key in available:
+        by_series.setdefault(series_of(key, current[key]), []).append(key)
 
-    ok = set()
-    for series, entries in by_series.items():
-        avail = [k for k, v in entries if st.is_available(v["status"])]
+    for series, avail in by_series.items():
         if len(avail) >= min_available:
             ok.update(avail)
-        elif avail:
-            label = (entries[0][1].get("series_name") or series)
+            continue
+        skipped = sorted(k for k in avail if k not in ok)
+        if skipped:
+            label = current[avail[0]].get("series_name") or series
             log(f"  {label}: 空きは {len(avail)}日 "
-                f"（{min_available}日以上で通知）→ 見送り: {', '.join(sorted(avail))}")
+                f"（{min_available}日以上で通知）→ 見送り: {', '.join(skipped)}")
     return ok
 
 
-def decide_notifications(current, previous, now, repeat_hours, min_available=1):
+def decide_notifications(current, previous, now, repeat_hours, min_available=1,
+                         priority_dates=()):
     """通知すべきキーを (新規, 継続中) に分けて返す。
 
     新規  : 通知対象になっていなかったものが、通知対象になった
@@ -141,11 +149,12 @@ def decide_notifications(current, previous, now, repeat_hours, min_available=1):
 
     min_available が2以上のときは、条件を満たさない系列の項目は
     空きがあっても通知対象にしない（notified_at も持たせない）。
+    ただし priority_dates の日は単独でも通知対象になる。
     そのため、条件を満たした時点で「空いている日がまとめて」通知される。
     """
     new_keys, cont_keys = [], []
     interval = timedelta(hours=repeat_hours)
-    ok = eligible_keys(current, min_available)
+    ok = eligible_keys(current, min_available, priority_dates)
 
     for key in current:
         if key not in ok:

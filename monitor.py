@@ -93,7 +93,8 @@ def check_target(target, args, store, now):
         log("  前回の状態がありません（初回確認）")
 
     new_keys, cont_keys, eligible = decide_notifications(
-        items, previous, now, target.repeat_hours, target.min_available)
+        items, previous, now, target.repeat_hours, target.min_available,
+        target.priority_dates)
 
     if new_keys or cont_keys:
         if new_keys:
@@ -104,7 +105,8 @@ def check_target(target, args, store, now):
             nt.build_alert_title(target.name, new_keys),
             nt.build_alert(target.name, new_keys, cont_keys, items, url,
                            target.date, target.repeat_hours,
-                           min_available=target.min_available),
+                           min_available=target.min_available,
+                           priority_dates=target.priority_dates),
             url,
         )
     else:

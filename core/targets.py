@@ -30,6 +30,12 @@ class Target:
             raw.get("min_available", defaults.get("min_available", 1))
         )
 
+        # この日だけは1日でも通知する（min_available の例外）
+        prio = raw.get("priority_dates", defaults.get("priority_dates")) or []
+        if not isinstance(prio, list):
+            prio = [prio]
+        self.priority_dates = [str(d) for d in prio]
+
         self.repeat_hours = float(
             raw.get("repeat_hours", defaults.get("repeat_hours", DEFAULT_REPEAT_HOURS))
         )

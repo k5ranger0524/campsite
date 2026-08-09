@@ -238,6 +238,7 @@ def parse(text, config, date_str, warn=None):
                 # 「同じ駐車場で何日空いたか」を数えるための括り
                 "series": key,
                 "series_name": area["name"],
+                "date": f"{d:%Y-%m-%d}",
             }
 
     return result
