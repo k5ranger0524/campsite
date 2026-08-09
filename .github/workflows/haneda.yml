@@ -1,13 +1,20 @@
-name: monitor-fast (起動ごとに25分間、3分おき)
+name: monitor-fast (起動ごとに55分間、3分おき)
 
 # targets.yml で group: fast を指定した対象を確認する。
 # 空きが数分〜十数分で消える対象（羽田の駐車場など）向け。
 #
 # GitHubのスケジュール実行は best-effort で、*/10 と書いても実測は
 # 中央値32分・最大144分の間隔だった（10分±1分で動いた回数は0）。
-# そこで起動の粒度には頼らず、1回の起動の中で25分間・3分おきに確認する。
-# concurrency により次の起動は前の実行の終了を待つので、
-# 起動が詰まっているときはほぼ連続して見張ることになる。
+# そこで起動の粒度には頼らず、1回の起動の中で55分間・3分おきに確認する。
+#
+# 55分にしている理由（実測した起動12回でシミュレーションした結果）:
+#   25分 … 監視できる割合 51%、見ていない時間の合計 290分、空白10回
+#   55分 … 監視できる割合 71%、見ていない時間の合計 182分、空白 4回
+# 実行中に次の起動が来ると concurrency により待機し、終了と同時に始まるので、
+# 起動が30分間隔で来ている時間帯はほぼ切れ目なく監視できる。
+#
+# ただしGitHubが1〜2時間まったく起動しないことが実際にあり、
+# その空白はループ長を変えても埋まらない。
 #
 # 状態ファイルは monitor-normal とは別にしてある。
 # 同じファイルを押し合うと、コミットが衝突するため。
@@ -26,7 +33,7 @@ on:
       loop_minutes:
         description: '1回の起動で何分間くり返し確認するか'
         type: string
-        default: '25'
+        default: '55'
       interval_seconds:
         description: 'くり返しの間隔（秒）'
         type: string
@@ -43,7 +50,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     # ループぶんに余裕を持たせつつ、万一止まらなくなったときの保険
-    timeout-minutes: 40
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +65,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           # 入力を直接シェルに展開しない（インジェクション対策）
           TEST_NOTIFY: ${{ inputs.test_notify }}
-          LOOP_MINUTES: ${{ inputs.loop_minutes || '25' }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || '55' }}
           INTERVAL_SECONDS: ${{ inputs.interval_seconds || '180' }}
         run: |
           if [ "$TEST_NOTIFY" = "true" ]; then

@@ -171,6 +171,10 @@ def run(args):
     # 繰り返し確認することで実質的な間隔を詰める。
     looping = args.loop_minutes > 0
     deadline = time.monotonic() + args.loop_minutes * 60 if looping else None
+    if looping:
+        # 実際にどの設定で動いたかを、後からログだけで確かめられるようにする
+        log(f"繰り返し確認: {args.loop_minutes:g}分間、{args.interval_seconds}秒おき "
+            f"（対象 {len(targets)}件）")
 
     round_no = 0
     failures = []
