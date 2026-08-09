@@ -346,6 +346,7 @@ https://reserve.489ban.net/...
 ```bash
 python3 tests/test_monitor.py      # パース・通知・状態遷移など
 python3 tests/test_tls_fallback.py # 中間証明書を送らないサーバへの対応
+bash    tests/test_push_state.sh   # state のコミット・push（競合の解決）
 ```
 
 パース・日付列の解決・通知判定・再通知間隔・状態遷移・複数対象のエラー分離・
@@ -374,6 +375,12 @@ python3 monitor.py --target akagi-family --file debug.html   # 全区画「空�
 |---|---|---|---|
 | [`akagi.yml`](.github/workflows/akagi.yml) | 起動ごとに1回（30分ごと起動） | `normal` | `state.json` |
 | [`haneda.yml`](.github/workflows/haneda.yml) | **起動ごとに55分間・3分おき** | `fast` | `state-fast.json` |
+
+state のコミットは両方とも [`scripts/push-state.sh`](scripts/push-state.sh) に任せる。
+state は「最後に確認した結果」だけを持つ生成物なので、他の実行が先に push していたら
+履歴を合流させず、最新の remote に載せ替えて今回の観測で上書きする（後勝ち）。
+`git pull --rebase` で解決しようとすると、監視対象を変えた直後などに同じ箇所が
+衝突して rebase が途中で止まり、空きが出ていないのにジョブ失敗（＝異常の誤検知）になる。
 
 ### スケジュールに頼らない理由（実測）
 

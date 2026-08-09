@@ -48,11 +48,6 @@ jobs:
         # monitor.py は正常にパースできた時しか state.json を書かないので、
         # 異常終了(exit 1)の回はファイルが変化せず、誤った状態はコミットされない。
         if: always()
-        run: |
-          if [ -n "$(git status --porcelain state.json)" ]; then
-            git config user.name  github-actions
-            git config user.email github-actions@github.com
-            git add state.json
-            git commit -m "update state"
-            git push || (git pull --rebase && git push)
-          fi
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: bash scripts/push-state.sh state.json "$BRANCH" "update state"
