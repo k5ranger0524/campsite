@@ -45,8 +45,9 @@ targets:
     name: 羽田空港 P2駐車場
     adapter: haneda_parking
     enabled: true
-    # 8/22〜25 のうち1日でも空いたら通知する
-    min_available: 1
+    # 8/22〜25 の4日すべてが空いたときだけ通知する（下の dates と同じ日数）。
+    # 1日だけ、あるいは3日だけ空いても通知しない（8/22 単独も通知しない）。
+    min_available: 4
     # 空きが十数分で消えるため短い間隔で確認する
     group: fast
     config:
@@ -59,10 +60,10 @@ targets:
       # 混雑も「空きあり」として通知する
       status_map:
         konzatsu: available
-    # 「同じ駐車場で3日以上まとまって空いたときだけ通知」に戻したい場合は
-    # min_available を 3 にして、単独でも知りたい日を priority_dates に書く:
-    #   min_available: 3
-    #   priority_dates: [2026-08-22]
+    # 条件をゆるめたい場合:
+    #   min_available: 3               # 3日以上そろえば通知
+    #   priority_dates: [2026-08-22]   # この日だけは単独でも通知（今は使っていない）
+    #   min_available: 1               # 1日でも空けば通知
 
   # ---------------------------------------------------------------------
   # ここから下は現在停止中（enabled: false）。
