@@ -1,7 +1,7 @@
 {
   "targets": {
     "haneda-parking": {
-      "updated_at": "2026-08-09T14:57:19.472706+09:00",
+      "updated_at": "2026-08-10T04:43:38.626987+09:00",
       "date": null,
       "items": {
         "P2 8/22": {
@@ -22,26 +22,6 @@
         "P2 8/25": {
           "status": "full",
           "name": "第2駐車場(P2/第1ターミナル) 8/25",
-          "notified_at": null
-        },
-        "P3 8/22": {
-          "status": "full",
-          "name": "第3駐車場(P3/第2ターミナル) 8/22",
-          "notified_at": null
-        },
-        "P3 8/23": {
-          "status": "full",
-          "name": "第3駐車場(P3/第2ターミナル) 8/23",
-          "notified_at": null
-        },
-        "P3 8/24": {
-          "status": "full",
-          "name": "第3駐車場(P3/第2ターミナル) 8/24",
-          "notified_at": null
-        },
-        "P3 8/25": {
-          "status": "full",
-          "name": "第3駐車場(P3/第2ターミナル) 8/25",
           "notified_at": null
         }
       }
@@ -161,5 +141,5 @@
       }
     }
   },
-  "updated_at": "2026-08-10T03:45:25.814610+09:00"
+  "updated_at": "2026-08-10T04:43:38.626987+09:00"
 }
