@@ -13,7 +13,7 @@ defaults:
 # group で確認頻度を選ぶ。ワークフローが --group で拾うので、
 # 対象を増やすときにワークフロー側を触る必要はない。
 #   normal … 30分ごと (.github/workflows/akagi.yml)
-#   fast   … 10分ごと (.github/workflows/haneda.yml)
+#   fast   … 1回の起動で55分間・3分おき (.github/workflows/haneda.yml)
 #            空きが数分で消える対象向け
 
 targets:
@@ -42,29 +42,40 @@ targets:
   #       A1: room_12345
 
   - id: haneda-parking
-    name: 羽田空港 第2・第3駐車場
+    name: 羽田空港 P2駐車場
     adapter: haneda_parking
     enabled: true
-    # 8/22〜25 のうち、同じ駐車場で3日以上空いたときに通知する
-    min_available: 3
-    # ただし 8/22 だけは1日でも通知する
-    priority_dates: [2026-08-22]
+    # 8/22〜25 のうち1日でも空いたら通知する
+    min_available: 1
     # 空きが十数分で消えるため短い間隔で確認する
     group: fast
     config:
       areas:
         P2: { id: 0, name: 第2駐車場(P2/第1ターミナル) }
-        P3: { id: 1, name: 第3駐車場(P3/第2ターミナル) }
+        # P3も見たくなったら次の行のコメントを外すだけでよい
+        # P3: { id: 1, name: 第3駐車場(P3/第2ターミナル) }
       dates: [2026-08-22, 2026-08-23, 2026-08-24, 2026-08-25]
       handicapped: 0
       # 混雑も「空きあり」として通知する
       status_map:
         konzatsu: available
+    # 「同じ駐車場で3日以上まとまって空いたときだけ通知」に戻したい場合は
+    # min_available を 3 にして、単独でも知りたい日を priority_dates に書く:
+    #   min_available: 3
+    #   priority_dates: [2026-08-22]
+
+  # ---------------------------------------------------------------------
+  # ここから下は現在停止中（enabled: false）。
+  # 設定・アダプタはそのまま残してあるので、また使うときは enabled を true に
+  # 戻すだけでよい。日付だけ書き換えれば別の旅程にも使える。
+  # 停止中でも手動での動作確認はできる:
+  #     python3 monitor.py --target haneda-p4
+  # ---------------------------------------------------------------------
 
   - id: haneda-p4
     name: 羽田空港 P4駐車場
     adapter: haneda_p4p5
-    enabled: true
+    enabled: false
     group: fast
     # 8/22〜25 のうち、同じ種別で3日以上空いたときに通知する
     min_available: 3
@@ -81,7 +92,7 @@ targets:
   - id: haneda-p5
     name: 羽田空港 P5駐車場
     adapter: haneda_p4p5
-    enabled: true
+    enabled: false
     group: fast
     # 8/22〜25 のうち、同じ種別で3日以上空いたときに通知する
     min_available: 3
@@ -98,7 +109,7 @@ targets:
     name: 変なホテル東京羽田駐車場
     adapter: btimes
     date: 2026-08-22
-    enabled: true
+    enabled: false
     # 羽田周辺はキャンセルが数分で消えるため短い間隔で確認する
     group: fast
     min_available: 1
@@ -114,7 +125,7 @@ targets:
     name: ハーモニーレジデンス羽田ウエスト駐車場
     adapter: btimes
     date: 2026-08-22
-    enabled: true
+    enabled: false
     group: fast
     min_available: 1
     config:
