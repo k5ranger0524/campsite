@@ -122,3 +122,19 @@ targets:
       park_id: 43295
       name: ハーモニーレジデンス羽田ウエスト駐車場
       allow_out_of_range: true
+
+  # === 動作確認用（検証が済んだら削除する） ===
+  # 現時点で実際に空いている日を監視対象にして、
+  # 強制発火ではない通常経路で通知が端末まで届くかを確かめるためのもの。
+  - id: verify-notify
+    name: 【動作確認】変なホテル東京羽田 8/18
+    adapter: btimes
+    date: 2026-08-18
+    enabled: true
+    group: fast
+    min_available: 1
+    config:
+      pref: tokyo
+      park_id: 55937
+      name: 【動作確認】変なホテル東京羽田駐車場
+      allow_out_of_range: true
