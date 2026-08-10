@@ -27,7 +27,8 @@ targets:
       facility: autocamp-akagi
       items:
         F1: room_24246
-        F2: room_24247
+        # F2 は対象外。戻すときはこの行のコメントを外す
+        # F2: room_24247
         F3: room_24248
         F4: room_24249
 
