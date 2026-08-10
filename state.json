@@ -1,7 +1,7 @@
 {
   "targets": {
     "akagi-family": {
-      "updated_at": "2026-08-04T20:56:12.211720+09:00",
+      "updated_at": "2026-08-10T10:55:09.648942+09:00",
       "date": "2026-09-19",
       "items": {
         "F1": {
@@ -10,9 +10,9 @@
           "notified_at": null
         },
         "F2": {
-          "status": "full",
+          "status": "available",
           "name": "【F2】3家族サイト",
-          "notified_at": null
+          "notified_at": "2026-08-10T10:55:09.648942+09:00"
         },
         "F3": {
           "status": "full",
@@ -27,5 +27,5 @@
       }
     }
   },
-  "updated_at": "2026-08-04T20:56:12.211720+09:00"
+  "updated_at": "2026-08-10T10:55:09.648942+09:00"
 }
