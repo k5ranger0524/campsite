@@ -22,7 +22,7 @@ ntfy でスマホに通知する。空きが続く間は一定時間ごとに再
 | 対象 | 条件 | 頻度 | 状態 |
 |---|---|---|---|
 | 赤城山オートキャンプ場 3家族サイト | 2026-09-19、**F1・F3・F4** のどれかが空いたら（F2 は対象外） | normal（30分ごと） | **稼働中** |
-| 羽田空港 P2駐車場 | 2026-08-22〜25 の**4日すべて**が空いたら | fast（55分ループ） | **稼働中** |
+| 羽田空港 P2駐車場 | — | — | 停止中（予約済み） |
 | 羽田空港 P3駐車場 | — | — | 停止中 |
 | 羽田空港 P4駐車場（一般/個室） | — | — | 停止中 |
 | 羽田空港 P5駐車場（一般/個室） | — | — | 停止中 |
@@ -38,6 +38,17 @@ ntfy でスマホに通知する。空きが続く間は一定時間ごとに再
 ```bash
 python3 monitor.py --target haneda-p4
 ```
+
+### fast グループを再開するときは2か所
+
+いま fast の対象はすべて停止中なので、`haneda.yml` の**定期実行も止めてある**
+（対象が無いまま動かすと `有効な対象がありません` で毎回ジョブが失敗し、
+失敗メールだけが届き続けるため）。再開するときは次の両方が要る。
+
+1. `targets.yml` で対象を `enabled: true` に戻す
+2. `.github/workflows/haneda.yml` の `schedule:` のコメントを外す
+
+1 だけだと、対象は有効なのに誰も動かさない状態になる。
 
 ---
 
@@ -378,7 +389,7 @@ python3 monitor.py --target akagi-family --file debug.html   # 全区画「空�
 | ワークフロー | 確認のしかた | group | 状態ファイル |
 |---|---|---|---|
 | [`akagi.yml`](.github/workflows/akagi.yml) | 起動ごとに1回（30分ごと起動） | `normal` | `state.json` |
-| [`haneda.yml`](.github/workflows/haneda.yml) | **起動ごとに55分間・3分おき** | `fast` | `state-fast.json` |
+| [`haneda.yml`](.github/workflows/haneda.yml) | **起動ごとに55分間・3分おき**（現在、定期実行は停止中） | `fast` | `state-fast.json` |
 
 state のコミットは両方とも [`scripts/push-state.sh`](scripts/push-state.sh) に任せる。
 state は「最後に確認した結果」だけを持つ生成物なので、他の実行が先に push していたら

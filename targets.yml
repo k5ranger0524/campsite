@@ -14,7 +14,8 @@ defaults:
 # 対象を増やすときにワークフロー側を触る必要はない。
 #   normal … 30分ごと (.github/workflows/akagi.yml)
 #   fast   … 1回の起動で55分間・3分おき (.github/workflows/haneda.yml)
-#            空きが数分で消える対象向け
+#            空きが数分で消える対象向け。
+#            ※ 現在 fast の対象はすべて停止中で、定期実行も止めてある
 
 targets:
   - id: akagi-family
@@ -42,10 +43,20 @@ targets:
   #     items:
   #       A1: room_12345
 
+  # ---------------------------------------------------------------------
+  # ここから下は現在すべて停止中（enabled: false）。
+  # そのため fast グループは空になっており、haneda.yml の定期実行も止めてある。
+  # 再開するときは enabled を true に戻したうえで、
+  # .github/workflows/haneda.yml の schedule のコメントも外すこと。
+  # 設定・アダプタはそのまま残してあるので、日付を書き換えれば別の旅程にも使える。
+  # 停止中でも手動での動作確認はできる:
+  #     python3 monitor.py --target haneda-parking
+  # ---------------------------------------------------------------------
+
   - id: haneda-parking
     name: 羽田空港 P2駐車場
     adapter: haneda_parking
-    enabled: true
+    enabled: false
     # 8/22〜25 の4日すべてが空いたときだけ通知する（下の dates と同じ日数）。
     # 1日だけ、あるいは3日だけ空いても通知しない（8/22 単独も通知しない）。
     min_available: 4
@@ -65,14 +76,6 @@ targets:
     #   min_available: 3               # 3日以上そろえば通知
     #   priority_dates: [2026-08-22]   # この日だけは単独でも通知（今は使っていない）
     #   min_available: 1               # 1日でも空けば通知
-
-  # ---------------------------------------------------------------------
-  # ここから下は現在停止中（enabled: false）。
-  # 設定・アダプタはそのまま残してあるので、また使うときは enabled を true に
-  # 戻すだけでよい。日付だけ書き換えれば別の旅程にも使える。
-  # 停止中でも手動での動作確認はできる:
-  #     python3 monitor.py --target haneda-p4
-  # ---------------------------------------------------------------------
 
   - id: haneda-p4
     name: 羽田空港 P4駐車場

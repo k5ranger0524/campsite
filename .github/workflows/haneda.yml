@@ -1,4 +1,4 @@
-name: monitor-fast (起動ごとに55分間、3分おき)
+name: monitor-fast (起動ごとに55分間、3分おき) ※定期実行は停止中
 
 # targets.yml で group: fast を指定した対象を確認する。
 # 空きが数分〜十数分で消える対象（羽田の駐車場など）向け。
@@ -20,10 +20,13 @@ name: monitor-fast (起動ごとに55分間、3分おき)
 # 同じファイルを押し合うと、コミットが衝突するため。
 
 on:
-  schedule:
-    # 10分ごと (UTC)。GitHubのスケジュールは best-effort なので、
-    # 混雑時はこの間隔どおりに動かないことがある
-    - cron: '*/10 * * * *'
+  # 定期実行は停止中。targets.yml の fast 対象がすべて enabled: false なので、
+  # 動かしても確認するものが無く、ジョブ失敗(exit 1)のメールが届き続けるだけになる。
+  # fast の対象を再開するときは、この2行のコメントを外すこと。
+  # schedule:
+  #   # 10分ごと (UTC)。GitHubのスケジュールは best-effort なので、
+  #   # 混雑時はこの間隔どおりに動かないことがある
+  #   - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       test_notify:
