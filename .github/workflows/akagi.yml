@@ -1,9 +1,12 @@
-name: monitor-normal (30分ごと)
+name: monitor-normal (30分ごと) ※定期実行は停止中
 
 on:
-  schedule:
-    # 30分ごと (UTC)。GitHubのスケジュールは混雑時に遅延することがある
-    - cron: '*/30 * * * *'
+  # 定期実行は停止中。targets.yml の normal 対象がすべて enabled: false なので、
+  # 動かしても確認するものが無く、ジョブ失敗(exit 1)のメールが届き続けるだけになる。
+  # 対象を再開するときは、この2行のコメントを外すこと。
+  # schedule:
+  #   # 30分ごと (UTC)。GitHubのスケジュールは混雑時に遅延することがある
+  #   - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       test_notify:
