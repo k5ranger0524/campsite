@@ -135,6 +135,14 @@ def render_with_browser(url, name, wait_selector=None, clicks=(), wait_ms=4000):
             }
             if req.post_data:
                 entry["post_data"] = req.post_data[:2000]
+            # API を直接叩くときに何を付ければよいか分かるよう、要求ヘッダも残す。
+            # 認証の値そのものはリポジトリに残さない（名前と長さだけ）
+            headers = {}
+            for k, v in (req.headers or {}).items():
+                if k.lower() in ("authorization", "cookie") or "token" in k.lower():
+                    v = f"<伏せ字 {len(v)}文字>"
+                headers[k] = v
+            entry["request_headers"] = headers
             try:
                 body = resp.text()
                 entry["truncated"] = len(body) > MAX_BODY
