@@ -898,6 +898,53 @@ targets:
           "（空きが続く間は 2 時間ごとに再通知）" in out)
     check("空きが無い回でも出る", "通知対象はありません" in out)
 
+    print("\n== 26. stransa（歯科Web予約）: 指定時刻以降の枠だけを空きとみなす ==")
+    from adapters import stransa
+    from core.util import MonitorError as ME
+
+    cfg = {"office": "x", "web_menu_id": 37430, "after": "14:00"}
+
+    def frames(day_times, rest=(), lo="2026-10-21", hi="2026-10-27"):
+        body = {"reservationFrames": [
+                    {"date": d, "frameCount": len(t), "times": t} for d, t in day_times],
+                "restDates": list(rest)}
+        return json.dumps({"from": lo, "to": hi, "body": body})
+
+    r = stransa.parse(frames([("2026-10-24", ["10:45", "12:00", "14:30", "15:00"])]),
+                      cfg, "2026-10-24")
+    eq("14時以降の枠があれば空きあり", r["14:00以降"]["status"], "available")
+    check("通知に出る名前に該当時刻が入る", "14:30・15:00" in r["14:00以降"]["name"])
+    eq("14時ちょうども対象",
+       stransa.parse(frames([("2026-10-24", ["14:00"])]), cfg,
+                     "2026-10-24")["14:00以降"]["status"], "available")
+    eq("午前だけなら空きなし",
+       stransa.parse(frames([("2026-10-24", ["10:45", "13:45"])]), cfg,
+                     "2026-10-24")["14:00以降"]["status"], "full")
+    eq("一覧に出ない日（枠ゼロ）は空きなし",
+       stransa.parse(frames([("2026-10-25", ["16:00"])]), cfg,
+                     "2026-10-24")["14:00以降"]["status"], "full")
+    eq("休診日は受付不可",
+       stransa.parse(frames([], rest=["2026-10-24"]), cfg,
+                     "2026-10-24")["14:00以降"]["status"], "closed")
+    for desc, text in [
+        ("問い合わせ期間外の日は黙って空きなしにしない",
+         frames([], lo="2026-10-28", hi="2026-11-03")),
+        ("応答の形が変わったら止まる",
+         json.dumps({"from": "2026-10-21", "to": "2026-10-27", "body": {"x": 1}})),
+        ("時刻の形が変わったら止まる",
+         frames([("2026-10-24", ["2pm"])])),
+    ]:
+        try:
+            stransa.parse(text, cfg, "2026-10-24")
+            check(desc, False)
+        except ME:
+            check(desc, True)
+    with open(os.path.join(ROOT, "captures", "stransa-1031.api.json"), encoding="utf-8") as f:
+        real = f.read()
+    r = stransa.parse(real, cfg, "2026-10-31")
+    eq("実データ(10/31は12:00のみ)は空きなし", r["14:00以降"]["status"], "full")
+    eq("実データの生の値をログ用に残す", r["14:00以降"]["raw"], "12:00")
+
     shutil.rmtree(tmp)
     print("\n" + "=" * 30)
     print(f"  成功 {PASS} / 失敗 {FAIL}")

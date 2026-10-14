@@ -33,6 +33,28 @@ targets:
         F3: room_24248
         F4: room_24249
 
+  # さいたま新都心おとなこども歯科・矯正歯科「歯並びについて相談したい(60分)」
+  # 10/24・10/31（土）の14時以降に始まる枠が1つでも出たら通知する。
+  # 日付ごとに1対象。日付を足すときはブロックを複製して id と date を変える
+  - id: dental-1024
+    name: さいたま新都心おとなこども歯科 歯並び相談 10/24
+    adapter: stransa
+    date: 2026-10-24
+    enabled: true
+    group: normal
+    config: &dental
+      office: 0452f03db193db904abb2c19aa4f4960
+      web_menu_id: 37430
+      after: "14:00"
+
+  - id: dental-1031
+    name: さいたま新都心おとなこども歯科 歯並び相談 10/31
+    adapter: stransa
+    date: 2026-10-31
+    enabled: true
+    group: normal
+    config: *dental
+
   # 例) 同じ489banの別施設を足す場合（facility と items を差し替えるだけ）
   # - id: example-camp
   #   name: 別のキャンプ場
