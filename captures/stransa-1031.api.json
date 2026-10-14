@@ -1,0 +1,117 @@
+[
+  {
+    "url": "https://o561198.ingest.us.sentry.io/api/4508011448827904/envelope/?sentry_key=736e7f301330640a7a1867a587a2f033&sentry_version=7&sentry_client=sentry.javascript.react%2F8.31.0",
+    "method": "POST",
+    "status": 200,
+    "content_type": "application/json",
+    "resource_type": "fetch",
+    "post_data": "{\"sent_at\":\"2026-10-14T06:56:39.799Z\",\"sdk\":{\"name\":\"sentry.javascript.react\",\"version\":\"8.31.0\"}}\n{\"type\":\"session\"}\n{\"sid\":\"825e8ee80238457aaf218c0ab2741204\",\"init\":true,\"started\":\"2026-10-14T06:56:39.799Z\",\"timestamp\":\"2026-10-14T06:56:39.799Z\",\"status\":\"ok\",\"errors\":0,\"attrs\":{\"release\":\"85c749f8c7e7b111fd33a636fdb045fd8a36e3e4\",\"environment\":\"prod\",\"user_agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36\"}}",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://reservation.stransa.co.jp/",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "content-type": "text/plain;charset=UTF-8",
+      "sec-ch-ua-mobile": "?0",
+      "accept-language": "ja-JP"
+    },
+    "truncated": false,
+    "body": "{}"
+  },
+  {
+    "url": "https://reservation-backend.stransa.co.jp/web-reservation/new-patient/token",
+    "method": "POST",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "resource_type": "xhr",
+    "post_data": "{\"office\":{\"encodedID\":\"0452f03db193db904abb2c19aa4f4960\"}}",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://reservation.stransa.co.jp/",
+      "accept-language": "ja-JP",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "accept": "application/json, text/plain, */*",
+      "content-type": "application/json"
+    },
+    "truncated": false,
+    "body": "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3ZWJSZXNlcnZhdGlvbiIsImF1ZCI6Ik5ERTJNdz09IiwiaWF0IjoxNzkxOTYxMDAwLCJleHAiOjE3OTE5NjQ2MDB9.W-87Jgqr3zqYtTYuJR3uzLQ2n8NW1iSJ3aMDMsi_SDU\"}\n"
+  },
+  {
+    "url": "https://reservation-backend.stransa.co.jp/web-reservation/new-patient/setting?from-ap=false",
+    "method": "GET",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "resource_type": "xhr",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "authorization": "<伏せ字 181文字>",
+      "referer": "https://reservation.stransa.co.jp/",
+      "accept-language": "ja-JP",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "accept": "application/json, text/plain, */*"
+    },
+    "truncated": false,
+    "body": "{\"webConfig\":{\"inUseRenewal\":true,\"reservableFromWeb\":true},\"basicConfig\":{\"opensAt\":\"09:30:00\",\"closesAt\":\"19:30:00\",\"webReserveDeadline\":0,\"webReserveDeadlineUnit\":\"DAY\",\"webReserveFinish\":12,\"webReserveTimeSplit\":15,\"showResourceName\":false,\"useDurationDisplay\":true,\"useDateTimeSuggestion\":false,\"useToken\":false,\"webOpenW0\":true,\"webOpenW1\":true,\"webOpenW2\":true,\"webOpenW3\":true,\"webOpenW4\":true,\"webOpenW5\":true,\"webOpenW6\":true,\"webOpenW0Tm\":null,\"webCloseW0Tm\":null,\"webOpenW1Tm\":null,\"webCloseW1Tm\":null,\"webOpenW2Tm\":null,\"webCloseW2Tm\":null,\"webOpenW3Tm\":null,\"webCloseW3Tm\":null,\"webOpenW4Tm\":null,\"webCloseW4Tm\":null,\"webOpenW5Tm\":null,\"webCloseW5Tm\":null,\"webOpenW6Tm\":null,\"webCloseW6Tm\":null,\"useReservableStartTm\":false,\"amReservableStartTm\":\"09:30:00\",\"pmReservableStartTm\":\"10:00:00\"},\"newPatientConfig\":{\"acceptNewbieFromWeb\":true,\"resourceSelectNewbie\":false,\"requiredFeedback\":false},\"repeaterPatientConfig\":{\"acceptRepeaterFromWeb\":true,\"resourceMain\":true,\"resourceSelectRepeater\":1},\"trackingCodesConfig\":{\"googleTagManager\":null,\"googleTagManagerHeadCode\":null,\"googleTagManagerBodyCode\":null,\"googleAnalytics\":false,\"googleAnalyticsCode\":null,\"googleAdWords\":false,\"googleAdWordsCode\":null,\"yahooPromotion\":false,\"yahooPromotionCode\":null},\"webMessageConfig\":{\"name\":\"さいたま新都心おとなこども歯科\",\"formalName\":\"さいたま新都心おとなこども歯科・矯正歯科\",\"useFormalName\":true,\"tel\":\"048-826-5662\",\"address\":\"〒338-0001　埼玉県さいたま市中央区上落合2-2-11　ポルテ29-1F\",\"mapUrl\":\"https://www.google.com/maps/place/%25E3%2581%2595%25E3%2581%2584%25E3%2581%259F%25E3%2581%25BE%25E6%2596%25B0%25E9%2583%25BD%25E5%25BF%2583%25E3%2581%258A%25E3%2581%25A8%25E3%2581%25AA%25E3%2581%2593%25E3%2581%25A9%25E3%2582%2582%25E6%25AD%25AF%25E7%25A7%2591%25E3%2583%25BB%25E7%259F%25AF%25E6%25AD%25A3%25E6%25AD%25AF%25E7%25A7%2591/@35.8899326,139.626359,17z/data=!3m2!4b1!5s0x6018c17520762e79:0x4db1cef96b792fbb!4m6!3m5!1s0x6018c19b98371ac1:0x3da93b6a39441c73!8m2!3d35.8899326!4d139.6289339!16s%252Fg%252F11x7pl00cv?authuser=0\\u0026entry=ttu\\u0026g_ep=EgoyMDI1MDMxMi4wIKXMDSoASAFQAw%253D%253D\",\"hpUrl\":\"https://saitamashintoshin-dental.com/\",\"msgOpens\":\"火水木／10:00～13:30　15:00～18:30\\r\\n土日祝／10:00～13:00　14:30～17:30\",\"msgClosed\":\"月・金\",\"calFlg\":true,\"calAmTm\":\"午前\",\"calPmTm\":\"午後\",\"restTypeW0\":null,\"restTypeW1\":\"all\",\"restTypeW2\":null,\"restTypeW3\":null,\"restTypeW4\":null,\"restTypeW5\":\"all\",\"restTypeW6\":null,\"msgHeader\":\"北与野駅徒歩１分\",\"msgTop\":\"◎初めて当院にご来院なさる方へ\\r\\n\\r\\n＊問診表のご記入がございますので、初診の方は10分前を目安にお越しいただけますと幸いです\\r\\n\\r\\n＊保険証をご持参ください\\r\\n\\r\\n◎ご予約完了後にお時間の変更をお電話にて依頼する可能性がございます。ご迷惑をおかけいたしますがご了承の程よろしくお願いいたします\\r\\n\\r\\nキャンセルが多い場合、システムの特性上WEB予約ができなくなる場合がございますのでご注意ください\\r\\n\\r\\nまた、web予約のキャンセルは三日前までにお願いしております。\\r\\nそれ以外のキャンセル・変更はお電話下さい\",\"msgNewbie\":\"初めてご来院の方\",\"msgRepeater\":\"通院中、または過去にご来院された方\",\"topImageBdata\":null,\"topImageUrl\":\"https://apotool-attach-files-production.s3.ap-northeast-1.amazonaws.com/bdata/4163/141488?X-Amz-Algorithm=AWS4-HMAC-SHA256\\u0026X-Amz-Credential=ASIA2QEXIXPFMPRLNS5O%2F20261014%2Fap-northeast-1%2Fs3%2Faws4_request\\u0026X-Amz-Date=20261014T065640Z\\u0026X-Amz-Expires=3600\\u0026X-Amz-Security-Token=IQoJb3JpZ2luX2VjEOb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaDmFwLW5vcnRoZWFzdC0xIkYwRAIgakcKLssiBrfaRUymnRo5SN9QcCIe4qBXLyPvOi6PrbICIANsAreqIGMq0rXYYnQQA734ikG1S9VFSOHTtAmWDYZAKp0ECK%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMNzIxODcxNzQ4MDQyIgxwOoH7k8kaQ1Mz7mAq8QPMSNb1asOWHqd1XiXrJFRBwxPMQZzfSbLF7mwiz5vVjbTo3N3kVWa2bYYy9sIEsNguuSEhXzdJwl0oA%2BdOO9tiOUEVWPZL33rvHaHmn0bJNHJQtzqk%2B8n3EOYKdRWJ5AlRHQXUTK1kif12pJcbo15pANCQZPltFhFazuINt2%2BipqWNb3rjs2eDScCBCjiHMZiKWNTriwUR4jngfDU8ij5Owh7GDFFZnsHIE896m9C%2BaZhyekIGqVKpRCSXRitKQD7GedLc5lj5Nj6ydbexihLQOV1PB9Z00kr51sQwWaUeYpc4NC6vRLe5BixLh2mEBsBsfpvSYbiveCqMJ5dPazg6ckVeXKRA1MrMgb0IzwAS81q8LsWBejpebc1jCWSfBJBHjEU092Xku9u%2FErGalWyZE1beos8cZCx7QHlG7LMWUQmLtS0rlA8WuwedFrc0z93teZaa5GVLpEu%2BxD64CGZCyEzDeeN02Hn71N5DcrbnTaXW%2FyGj9B5V%2FS%2F0RzWnwCWpN5BpRJfOzlvrF9k54L9zAo1izJD9qTvCoWcHsfbaIULI%2FEUhS%2BSPPGcCvxaZqxQMX3bhZPDARFZnGtY3E34lBIZUUiGdiLJZGp2R4YAuSgi0xM%2BVzm%2BGpW7h1CTNO0kLVC6nn5U99SmraI7liSR80DC%2BvrzWBjqnAfKQeqdYzgzi69LVjhC2rmbE15%2F4e4QQU%2FLyp84oMARANFT6%2BUzJ0vIylVko4o2onq7aa5UoKifvkNGbNwat9U8CO2vf6B2GZZBqn4oF%2FleV2WRBsgSN03iCFlP3pQuQwi5UEJXCQB7jAwa1AV5UHDseiwP0lM5Vf6Gkt0OCQDOBjGZ0qVr9WP2U8AR5f9m%2BwvU%2BGfI7FnnHNjBVOYD%2BeSqXbDQTayxW\\u0026X-Amz-SignedHeaders=host\\u0026X-Amz-Signature=31fce48e059f7f0aa1e4f3776e0036378576dd7ef496b62ce21b326ddf30350c\",\"colorType\":2,\"calendarMark1\":1,\"calendarMark2\":1,\"calendarMark3\":1,\"calendarMark1Limit\":0,\"calendarMark3Limit\":1,\"calendarMark1Text\":\"空きなし\",\"calendarMark2Text\":\"残り少し\",\"calendarMark3Text\":\"余裕あり\"},\"webMailTemplateConfig\":{\"sendCreateReservationForNewPatient\":true,\"sendCancelReservationForNewPatient\":true,\"sendCreateReservationForRepeaterPatient\":true,\"sendCancelReservationForRepeaterPatient\":true,\"sendChangeReservationForRepeaterPatient\":true},\"apSMSConfig\":null}\n"
+  },
+  {
+    "url": "https://reservation-backend.stransa.co.jp/web-reservation/new-patient/setting?from-ap=false",
+    "method": "GET",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "resource_type": "xhr",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "authorization": "<伏せ字 181文字>",
+      "referer": "https://reservation.stransa.co.jp/",
+      "accept-language": "ja-JP",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "accept": "application/json, text/plain, */*"
+    },
+    "truncated": false,
+    "body": "{\"webConfig\":{\"inUseRenewal\":true,\"reservableFromWeb\":true},\"basicConfig\":{\"opensAt\":\"09:30:00\",\"closesAt\":\"19:30:00\",\"webReserveDeadline\":0,\"webReserveDeadlineUnit\":\"DAY\",\"webReserveFinish\":12,\"webReserveTimeSplit\":15,\"showResourceName\":false,\"useDurationDisplay\":true,\"useDateTimeSuggestion\":false,\"useToken\":false,\"webOpenW0\":true,\"webOpenW1\":true,\"webOpenW2\":true,\"webOpenW3\":true,\"webOpenW4\":true,\"webOpenW5\":true,\"webOpenW6\":true,\"webOpenW0Tm\":null,\"webCloseW0Tm\":null,\"webOpenW1Tm\":null,\"webCloseW1Tm\":null,\"webOpenW2Tm\":null,\"webCloseW2Tm\":null,\"webOpenW3Tm\":null,\"webCloseW3Tm\":null,\"webOpenW4Tm\":null,\"webCloseW4Tm\":null,\"webOpenW5Tm\":null,\"webCloseW5Tm\":null,\"webOpenW6Tm\":null,\"webCloseW6Tm\":null,\"useReservableStartTm\":false,\"amReservableStartTm\":\"09:30:00\",\"pmReservableStartTm\":\"10:00:00\"},\"newPatientConfig\":{\"acceptNewbieFromWeb\":true,\"resourceSelectNewbie\":false,\"requiredFeedback\":false},\"repeaterPatientConfig\":{\"acceptRepeaterFromWeb\":true,\"resourceMain\":true,\"resourceSelectRepeater\":1},\"trackingCodesConfig\":{\"googleTagManager\":null,\"googleTagManagerHeadCode\":null,\"googleTagManagerBodyCode\":null,\"googleAnalytics\":false,\"googleAnalyticsCode\":null,\"googleAdWords\":false,\"googleAdWordsCode\":null,\"yahooPromotion\":false,\"yahooPromotionCode\":null},\"webMessageConfig\":{\"name\":\"さいたま新都心おとなこども歯科\",\"formalName\":\"さいたま新都心おとなこども歯科・矯正歯科\",\"useFormalName\":true,\"tel\":\"048-826-5662\",\"address\":\"〒338-0001　埼玉県さいたま市中央区上落合2-2-11　ポルテ29-1F\",\"mapUrl\":\"https://www.google.com/maps/place/%25E3%2581%2595%25E3%2581%2584%25E3%2581%259F%25E3%2581%25BE%25E6%2596%25B0%25E9%2583%25BD%25E5%25BF%2583%25E3%2581%258A%25E3%2581%25A8%25E3%2581%25AA%25E3%2581%2593%25E3%2581%25A9%25E3%2582%2582%25E6%25AD%25AF%25E7%25A7%2591%25E3%2583%25BB%25E7%259F%25AF%25E6%25AD%25A3%25E6%25AD%25AF%25E7%25A7%2591/@35.8899326,139.626359,17z/data=!3m2!4b1!5s0x6018c17520762e79:0x4db1cef96b792fbb!4m6!3m5!1s0x6018c19b98371ac1:0x3da93b6a39441c73!8m2!3d35.8899326!4d139.6289339!16s%252Fg%252F11x7pl00cv?authuser=0\\u0026entry=ttu\\u0026g_ep=EgoyMDI1MDMxMi4wIKXMDSoASAFQAw%253D%253D\",\"hpUrl\":\"https://saitamashintoshin-dental.com/\",\"msgOpens\":\"火水木／10:00～13:30　15:00～18:30\\r\\n土日祝／10:00～13:00　14:30～17:30\",\"msgClosed\":\"月・金\",\"calFlg\":true,\"calAmTm\":\"午前\",\"calPmTm\":\"午後\",\"restTypeW0\":null,\"restTypeW1\":\"all\",\"restTypeW2\":null,\"restTypeW3\":null,\"restTypeW4\":null,\"restTypeW5\":\"all\",\"restTypeW6\":null,\"msgHeader\":\"北与野駅徒歩１分\",\"msgTop\":\"◎初めて当院にご来院なさる方へ\\r\\n\\r\\n＊問診表のご記入がございますので、初診の方は10分前を目安にお越しいただけますと幸いです\\r\\n\\r\\n＊保険証をご持参ください\\r\\n\\r\\n◎ご予約完了後にお時間の変更をお電話にて依頼する可能性がございます。ご迷惑をおかけいたしますがご了承の程よろしくお願いいたします\\r\\n\\r\\nキャンセルが多い場合、システムの特性上WEB予約ができなくなる場合がございますのでご注意ください\\r\\n\\r\\nまた、web予約のキャンセルは三日前までにお願いしております。\\r\\nそれ以外のキャンセル・変更はお電話下さい\",\"msgNewbie\":\"初めてご来院の方\",\"msgRepeater\":\"通院中、または過去にご来院された方\",\"topImageBdata\":null,\"topImageUrl\":\"https://apotool-attach-files-production.s3.ap-northeast-1.amazonaws.com/bdata/4163/141488?X-Amz-Algorithm=AWS4-HMAC-SHA256\\u0026X-Amz-Credential=ASIA2QEXIXPFMPRLNS5O%2F20261014%2Fap-northeast-1%2Fs3%2Faws4_request\\u0026X-Amz-Date=20261014T065640Z\\u0026X-Amz-Expires=3600\\u0026X-Amz-Security-Token=IQoJb3JpZ2luX2VjEOb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaDmFwLW5vcnRoZWFzdC0xIkYwRAIgakcKLssiBrfaRUymnRo5SN9QcCIe4qBXLyPvOi6PrbICIANsAreqIGMq0rXYYnQQA734ikG1S9VFSOHTtAmWDYZAKp0ECK%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMNzIxODcxNzQ4MDQyIgxwOoH7k8kaQ1Mz7mAq8QPMSNb1asOWHqd1XiXrJFRBwxPMQZzfSbLF7mwiz5vVjbTo3N3kVWa2bYYy9sIEsNguuSEhXzdJwl0oA%2BdOO9tiOUEVWPZL33rvHaHmn0bJNHJQtzqk%2B8n3EOYKdRWJ5AlRHQXUTK1kif12pJcbo15pANCQZPltFhFazuINt2%2BipqWNb3rjs2eDScCBCjiHMZiKWNTriwUR4jngfDU8ij5Owh7GDFFZnsHIE896m9C%2BaZhyekIGqVKpRCSXRitKQD7GedLc5lj5Nj6ydbexihLQOV1PB9Z00kr51sQwWaUeYpc4NC6vRLe5BixLh2mEBsBsfpvSYbiveCqMJ5dPazg6ckVeXKRA1MrMgb0IzwAS81q8LsWBejpebc1jCWSfBJBHjEU092Xku9u%2FErGalWyZE1beos8cZCx7QHlG7LMWUQmLtS0rlA8WuwedFrc0z93teZaa5GVLpEu%2BxD64CGZCyEzDeeN02Hn71N5DcrbnTaXW%2FyGj9B5V%2FS%2F0RzWnwCWpN5BpRJfOzlvrF9k54L9zAo1izJD9qTvCoWcHsfbaIULI%2FEUhS%2BSPPGcCvxaZqxQMX3bhZPDARFZnGtY3E34lBIZUUiGdiLJZGp2R4YAuSgi0xM%2BVzm%2BGpW7h1CTNO0kLVC6nn5U99SmraI7liSR80DC%2BvrzWBjqnAfKQeqdYzgzi69LVjhC2rmbE15%2F4e4QQU%2FLyp84oMARANFT6%2BUzJ0vIylVko4o2onq7aa5UoKifvkNGbNwat9U8CO2vf6B2GZZBqn4oF%2FleV2WRBsgSN03iCFlP3pQuQwi5UEJXCQB7jAwa1AV5UHDseiwP0lM5Vf6Gkt0OCQDOBjGZ0qVr9WP2U8AR5f9m%2BwvU%2BGfI7FnnHNjBVOYD%2BeSqXbDQTayxW\\u0026X-Amz-SignedHeaders=host\\u0026X-Amz-Signature=31fce48e059f7f0aa1e4f3776e0036378576dd7ef496b62ce21b326ddf30350c\",\"colorType\":2,\"calendarMark1\":1,\"calendarMark2\":1,\"calendarMark3\":1,\"calendarMark1Limit\":0,\"calendarMark3Limit\":1,\"calendarMark1Text\":\"空きなし\",\"calendarMark2Text\":\"残り少し\",\"calendarMark3Text\":\"余裕あり\"},\"webMailTemplateConfig\":{\"sendCreateReservationForNewPatient\":true,\"sendCancelReservationForNewPatient\":true,\"sendCreateReservationForRepeaterPatient\":true,\"sendCancelReservationForRepeaterPatient\":true,\"sendChangeReservationForRepeaterPatient\":true},\"apSMSConfig\":null}\n"
+  },
+  {
+    "url": "https://reservation-backend.stransa.co.jp/web-reservation/new-patient/reservation-frames?from-ap=false&search-type=TIMES&from-date=2026-10-28&to-date=2026-11-03&web-menu-id=37430",
+    "method": "GET",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "resource_type": "xhr",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "authorization": "<伏せ字 181文字>",
+      "referer": "https://reservation.stransa.co.jp/",
+      "accept-language": "ja-JP",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "accept": "application/json, text/plain, */*"
+    },
+    "truncated": false,
+    "body": "{\"reservationFrames\":[{\"date\":\"2026-10-28\",\"frameCount\":41,\"times\":[\"10:00\",\"10:15\",\"10:30\",\"10:45\",\"11:00\",\"11:15\",\"11:30\",\"11:45\",\"12:00\",\"12:15\",\"12:30\",\"15:00\",\"16:30\",\"16:45\",\"17:00\",\"17:15\",\"17:30\"]},{\"date\":\"2026-10-29\",\"frameCount\":44,\"times\":[\"10:00\",\"10:15\",\"10:30\",\"10:45\",\"11:00\",\"11:15\",\"11:30\",\"11:45\",\"12:00\",\"12:15\",\"12:30\",\"15:00\",\"15:15\",\"15:30\",\"15:45\",\"16:00\",\"16:15\",\"16:30\",\"16:45\",\"17:00\",\"17:15\",\"17:30\"]},{\"date\":\"2026-10-31\",\"frameCount\":1,\"times\":[\"12:00\"]},{\"date\":\"2026-11-01\",\"frameCount\":33,\"times\":[\"11:45\",\"12:00\",\"14:30\",\"14:45\",\"15:00\",\"15:15\",\"15:30\",\"15:45\",\"16:00\",\"16:15\",\"16:30\"]}],\"restDates\":[\"2026-10-30\",\"2026-11-02\",\"2026-11-03\"]}\n"
+  },
+  {
+    "url": "https://reservation-backend.stransa.co.jp/web-reservation/new-patient/web-menus/37430?for-repeater=false",
+    "method": "GET",
+    "status": 200,
+    "content_type": "application/json; charset=UTF-8",
+    "resource_type": "xhr",
+    "request_headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "authorization": "<伏せ字 181文字>",
+      "referer": "https://reservation.stransa.co.jp/",
+      "accept-language": "ja-JP",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\", \"HeadlessChrome\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "accept": "application/json, text/plain, */*"
+    },
+    "truncated": false,
+    "body": "{\"webMenu\":{\"id\":37430,\"name\":\"歯並びについて相談したい\",\"minute\":60,\"isTelemed\":false,\"needCredit\":false},\"webMenuResource\":{\"no1Resource\":null,\"no2Resource\":null}}\n"
+  }
+]
