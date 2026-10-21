@@ -12,7 +12,7 @@ defaults:
 
 # group で確認頻度を選ぶ。ワークフローが --group で拾うので、
 # 対象を増やすときにワークフロー側を触る必要はない。
-#   normal … 30分ごと (.github/workflows/akagi.yml)
+#   normal … 1回の起動で55分間・3分おき (.github/workflows/akagi.yml、起動は30分ごと指定)
 #   fast   … 1回の起動で55分間・3分おき (.github/workflows/haneda.yml)
 #            空きが数分で消える対象向け。
 #            ※ 現在 fast の対象はすべて停止中で、定期実行も止めてある

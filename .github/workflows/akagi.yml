@@ -1,4 +1,9 @@
-name: monitor-normal (30分ごと)
+name: monitor-normal (起動ごとに55分間、3分おき)
+
+# GitHubの定期実行は実測で3〜4時間に1回まで間引かれる（2026-10-15〜21: 43回/6.5日）。
+# 起動の間隔には頼らず、fast と同じく1回の起動の中で55分間・3分おきに確認する。
+# fast 側(haneda.yml)へ移さずここで回しているのは、schedule を戻してから実際に
+# 動き出すまで約9時間かかった経験があり、登録済みのこちらを使い続けるため。
 
 on:
   # 止めるときは、targets.yml の normal 対象を enabled: false にするのと同時に
@@ -15,6 +20,14 @@ on:
         description: '通知テスト（空き状況に関わらず通知を1回送る）'
         type: boolean
         default: false
+      loop_minutes:
+        description: '1回の起動で何分間くり返し確認するか'
+        type: string
+        default: '55'
+      interval_seconds:
+        description: 'くり返しの間隔（秒）'
+        type: string
+        default: '180'
 
 permissions:
   contents: write
@@ -27,6 +40,8 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # ループぶんに余裕を持たせつつ、万一止まらなくなったときの保険
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
 
@@ -41,11 +56,15 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           # 入力を直接シェルに展開しない（インジェクション対策）
           TEST_NOTIFY: ${{ inputs.test_notify }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || '55' }}
+          INTERVAL_SECONDS: ${{ inputs.interval_seconds || '180' }}
         run: |
           if [ "$TEST_NOTIFY" = "true" ]; then
+            # テスト通知は1回だけでよい
             python3 monitor.py --group normal --state state.json --test-notify
           else
-            python3 monitor.py --group normal --state state.json
+            python3 monitor.py --group normal --state state.json \
+              --loop-minutes "$LOOP_MINUTES" --interval-seconds "$INTERVAL_SECONDS"
           fi
 
       - name: state.json を保存

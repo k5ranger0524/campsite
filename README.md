@@ -186,7 +186,7 @@ python3 monitor.py --test-notify            # 通知を強制発火して疎通�
 | `adapter` | `adapters/` のモジュール名 |
 | `date` | 監視対象日。日付の概念がない対象（駐車場など）は省略可 |
 | `enabled` | `false` にすると一括実行から外れる |
-| `group` | 確認頻度のグループ。`normal`(30分ごと) / `fast`(1回の起動で55分間・3分おき)。既定は `normal` |
+| `group` | 確認頻度のグループ。`normal`(akagi.yml) / `fast`(1回の起動で55分間・3分おき)。既定は `normal` |
 | `repeat_hours` | 空きが続く間の再通知間隔（既定は `defaults.repeat_hours`、2時間） |
 | `min_available` | 同じ枠で何日以上空いたら通知するか（既定 `1`。下記） |
 | `priority_dates` | この日だけは1日でも通知する（`min_available` の例外） |
@@ -398,7 +398,7 @@ python3 monitor.py --target akagi-family --file debug.html   # 全区画「空�
 
 | ワークフロー | 確認のしかた | group | 状態ファイル |
 |---|---|---|---|
-| [`akagi.yml`](.github/workflows/akagi.yml) | 起動ごとに1回（30分ごと起動） | `normal` | `state.json` |
+| [`akagi.yml`](.github/workflows/akagi.yml) | 起動ごとに55分間・3分おき（30分ごと起動） | `normal` | `state.json` |
 | [`haneda.yml`](.github/workflows/haneda.yml) | **起動ごとに55分間・3分おき** | `fast` | `state-fast.json` |
 
 **現在はどちらも `schedule` をコメントアウトして停止中**（手動実行のみ受け付ける）。
